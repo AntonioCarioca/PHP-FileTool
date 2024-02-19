@@ -215,4 +215,42 @@ class FileTool
         // Concatenate the original file name with the current date and extension
         return $file = $fileName . '_' . date('Y-m-d') . '.' . $fileExtension;
     }
+
+    /**
+     * Converts a file name to lowercase.
+     * 
+     * converts all letters in the filename to lower case and
+     * removes blank spaces.
+     * 
+     * @param string $file The name of the file to be converted.
+     * 
+     * @return string       The name of the file converted to lower case.
+     */
+    private static function toLower(string $file): string
+    {
+        // Convert the file name to lowercase
+        $file = mb_convert_case($file, MB_CASE_LOWER, "UTF-8");
+        // Remove any spaces from the file name
+        $file = preg_replace('/\s+/', '', $file);
+        // Return the lowercase file name
+        return $file;
+    }
+
+    /**
+     * Keeps the file name unchanged.
+     * 
+     * Returns the filename without applying any pattern,
+     * removing only special characters and spaces.
+     * 
+     * @param string $file The name of the file.
+     * 
+     * @return string       The name of the sanitized file.
+     */
+    private static function toNone(string $file): string
+    {
+        // Remove any spaces from the file name
+        $file = preg_replace('/\s+/', '', $file);
+        // Return the sanitized file name
+        return $file;
+    }
 }
