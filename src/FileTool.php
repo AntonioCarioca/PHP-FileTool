@@ -219,7 +219,7 @@ class FileTool
     /**
      * Converts a file name to lowercase.
      * 
-     * converts all letters in the filename to lower case and
+     * Converts all letters in the filename to lower case and
      * removes blank spaces.
      * 
      * @param string $file The name of the file to be converted.
@@ -252,5 +252,49 @@ class FileTool
         $file = preg_replace('/\s+/', '', $file);
         // Return the sanitized file name
         return $file;
+    }
+
+    /**
+     * Converts a file name to PascalCase format.
+     *
+     * Converts the filename to PascalCase, capitalizing the first letter of each
+     * word and removing whitespace.
+     * 
+     * @param  string $file The name of the file to be converted.
+     * 
+     * @return string       The file name is converted to PascalCase.
+     */
+    private static function toPascal(string $file): string
+    {
+    	// Convert the file name to title case (PascalCase)
+    	$file = mb_convert_case($file, MB_CASE_TITLE, 'UTF-8');
+    	// Remove any whitespace from the file name
+		$file = preg_replace('/\s+/', '', $file);
+		// Extract the file extension and convert it to lowercase
+		$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+		$fileExtension = strtolower($fileExtension);
+		// Replace the file extension in the filename
+		$newFile = str_replace('.' . $fileExtension, '.' . $fileExtension, $file);
+		// Return the converted file name
+		return $newFile;
+    }
+
+    /**
+     * Converts a file name to uppercase letters.
+     * 
+     * Converts all letters in the filename to uppercase and removes blank spaces.
+     * 
+     * @param  string $file The name of the file to be converted.
+     * 
+     * @return string       The name of the file converted to upper case.
+     */
+    private static function toUpper(string $file): string
+    {
+    	// Convert the file name to uppercase
+    	$file = mb_convert_case($file, MB_CASE_UPPER, "UTF-8");
+    	// Remove any spaces from the file name
+		$file = preg_replace('/\s+/', '', $file);
+		// Return the uppercase file name
+		return $file;
     }
 }
