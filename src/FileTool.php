@@ -3,13 +3,17 @@
 namespace PHPFileTool\FileTool;
 
 /**
- * FileTool - 
+ * FileTool - Library containing the main functions of the PHP file system.
+ *
+ * This class provides static methods for manipulating files and directories,
+ * how to create directories, create files, sanitize directory and file names,
+ * among other features related to the file system.
  * 
  * @category File_Utilities
  * @package  PHPFileTool\FileTool
  * @author   XxZeroxX <antoniomarcos.silva@protonmail.com>
  * @license  https://www.gnu.org/licenses/gpl-3.0.html GNU General Public License
- *          v3.0 or later
+ *           v3.0 or later
  * @link     https://antoniosilva.hashnode.dev
  * @since    Release: 1.0
  */
@@ -32,7 +36,7 @@ class FileTool
         $dir = FileTool::sanitizeDirectory($dir);
 
         // Check if the directory already exists
-        if (FileTool::checkDir($dir)) {
+        if (is_dir($dir)) {
             // If the directory exists, handle the error and return
             ErrorHandler::handleError('The directory already exists', 500);
             return;
@@ -161,5 +165,54 @@ class FileTool
             return null;
             break;
         }
+    }
+
+    /**
+     * Converts a file name to CamelCase format.
+     * 
+     * Converts the file name to CamelCase, removing spaces and
+     * capitalizing the first letter of each word.
+     * 
+     * @param string $file The name of the file to be converted.
+     * 
+     * @return string       The name of the file converted to CamelCase.
+     */
+    private static function toCamel(string $file): string
+    {
+        // Split the file name into words based on spaces
+        $words = explode(' ', $file);
+        // Remove any empty elements from the array
+        $words = array_filter($words, fn($word) => $word !== '');
+        // Reset array indices to start from 0
+        $words = array_values($words);
+        // Capitalize the first letter of each word
+        $words = array_map('ucfirst', $words);
+        // Convert the first word to lowercase
+        $words[0] = strtolower($words[0]);
+        // Concatenate the words to form the CamelCase string
+        return $words = implode('', $words);
+    }
+
+    /**
+     * Adds a date to the file name.
+     * 
+     * Adds the current date to the file name in 'Y-m-d' format.
+     * 
+     * @param string $file The name of the original file.
+     * 
+     * @return string       The name of the file with the date added.
+     */
+    private static function toDate(string $file): string
+    {
+        // Convert the file name to lowercase
+        $file = mb_convert_case($file, MB_CASE_LOWER, "UTF-8");
+        // Remove any spaces from the file name
+        $file = preg_replace('/\s+/', '', $file);
+        // Extract the file extension
+        $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+        // Extract the file name without the extension
+        $fileName = pathinfo($file, PATHINFO_FILENAME);
+        // Concatenate the original file name with the current date and extension
+        return $file = $fileName . '_' . date('Y-m-d') . '.' . $fileExtension;
     }
 }
