@@ -102,6 +102,45 @@ class FileTool
     }
 
     /**
+     * Removes an empty directory.
+     * 
+     * Removes the specified directory if it is empty.
+     * 
+     * @param  string $dir The path of the directory to be removed.
+     * 
+     * @return void      There is no explicit feedback.
+     */
+    public static function removeDir(string $dir): void
+    {
+    	// Check if the directory exists
+    	if (!is_dir($dir)) {
+			ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+			return;
+		}
+
+		// Check if the parent directory is readable
+		if (!is_readable(dirname($dir))) {
+			ErrorHandler::handleError('Cannot access the directory.', 500);
+			return;
+		}
+
+		// Check if the parent directory is writable
+		if (!is_writable(dirname($dir))) {
+			ErrorHandler::handleError('Cannot write to directory.', 500);
+			return;
+		}
+
+		// Check if the directory is empty
+		if (count(scandir($dir)) !== 2) {
+			ErrorHandler::handleError('The directory is not empty or an error occurred when deleting the directory.', 500);
+			return;
+		}
+
+		// Remove the directory
+		rmdir($dir);
+    }
+
+    /**
      * Creates several files with sequential names.
      * 
      * Creates a specified number of files with sequential names in the given
@@ -167,7 +206,7 @@ class FileTool
 			// Generate the next file name for the next iteration
 			$fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
 		}
-		
+
 		// Clear stat cache
 		clearstatcache();
     }
