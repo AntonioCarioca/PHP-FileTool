@@ -102,6 +102,77 @@ class FileTool
     }
 
     /**
+     * Creates several files with sequential names.
+     * 
+     * Creates a specified number of files with sequential names in the given
+     * directory provided, if they don't already exist.
+     * 
+     * @param  string      $dir      The path of the directory where the files will 
+     *                               be created.
+     * @param  string      $file     The base name of the files to be created.
+     * @param  string|null $type     Optional type of files to be created. Default 
+     *                               is null.
+     * @param  int         $quantity The number of files to be created.
+     * 
+     * @return void                There is no explicit feedback.
+     */
+    public static function createMany(string $dir, string $file, string $type = null, int $quantity): void
+    {
+    	// Sanitize the directory and file names
+    	$dir = FileTool::sanitizeDirectory($dir);
+		$file = FileTool::sanitizeFile($file, $type);
+
+		// Check if the quantity is valid
+		if ($quantity <= 0) {
+			ErrorHandler::handleError('The quantity cannot be 0 and/or negative.', 500);
+			return;
+		}
+
+		// Create the directory if it doesn't exist
+		if (!is_dir($dir)) {
+			FileTool::createDir($dir, 0777, true);
+		}
+
+		// Check if the directory is readable
+		if (!is_readable($dir)) {
+			ErrorHandler::handleError('Cannot access the directory', 500);
+			return;
+		}
+
+		// Check if the directory is writable
+		if (!is_writable($dir)) {
+			ErrorHandler::handleError('Cannot write to directory', 500);
+			return;
+		}
+
+		// Construct the full path of the file
+		$fileFull = $dir . '/' . $file;
+		// Extract the file extension and file name without extension
+		$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+		$fileName = pathinfo($file, PATHINFO_FILENAME);
+
+		// Check if the base file already exists
+		if (file_exists($fileFull)) {
+			ErrorHandler::handleError('The file already exists.', 500);
+			return;
+		}
+
+		// Create the specified number of files with sequential names
+		for ($i = 1; $i <= $quantity; $i++) {
+			// Attempt to create the file
+			if (!fopen($fileFull, 'w')) {
+				ErrorHandler::handleError('The file could not be created', 500);
+				return;
+			}
+			// Generate the next file name for the next iteration
+			$fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
+		}
+		
+		// Clear stat cache
+		clearstatcache();
+    }
+
+    /**
      * Method for sanitizing directory names.
      * 
      * Removes special characters and normalizes the format of a directory path.
