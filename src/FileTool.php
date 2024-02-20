@@ -141,6 +141,57 @@ class FileTool
     }
 
     /**
+     * Remove a file.
+     * 
+     * Removes the specified file, if it exists.
+     * 
+     * @param  string $path The path of the file to be removed.
+     * 
+     * @return void       There is no explicit feedback.
+     */
+    public static function removeFile(string $path): void
+    {
+    	// Check if the directory of the file exists
+    	if (!is_dir(dirname($path))) {
+			ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+			return;
+		}
+
+		// Check if the parent directory is readable
+		if (!is_readable(dirname($path))) {
+			ErrorHandler::handleError('Cannot access the directory.', 500);
+			return;
+		}
+
+		// Check if the parent directory is writable
+		if (!is_writable(dirname($path))) {
+			ErrorHandler::handleError('Cannot write to directory.', 500);
+			return;
+		}
+
+		// Check if the file exists
+		if (!file_exists($path)) {
+			ErrorHandler::handleError('The file doesn\'t exist.', 500);
+			return;
+		}
+
+		// Check if it's a regular file
+		if (!is_file($path)) {
+			ErrorHandler::handleError('It\'s not a file.', 500);
+			return;
+		}
+
+		// Check if the file is writable
+		if (!is_writable($path)) {
+			ErrorHandler::handleError('The file cannot be deleted because it is not writable.', 500);
+			return;
+		}
+
+		// Remove the file
+		unlink($path);
+    }
+
+    /**
      * Creates several files with sequential names.
      * 
      * Creates a specified number of files with sequential names in the given
