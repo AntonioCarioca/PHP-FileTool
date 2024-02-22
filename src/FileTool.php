@@ -374,6 +374,81 @@ class FileTool
     }
 
     /**
+     * Renames all files in a directory with a common base name and sequential 
+     * numbering.
+     * 
+     * Renames all files within the specified directory using the provided base 
+     * file name and assigns sequential numbering to each file. Optionally, a file 
+     * type can be specified.
+     * 
+     * @param  string      $dir      The path of the directory containing the files 
+     *                               to be renamed.
+     * @param  string      $fileName The base name for the files to be renamed.
+     * @param  string|null $type     Optional type of the files to be renamed. 
+     *                               Default is null.
+     * 
+     * @return void                There is no explicit return.
+     */
+    public static function renameAll(string $dir, string $fileName, string $type = null): void
+    {
+        // Check if the directory exists
+        if (!is_dir($dir)) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return;
+        }
+
+        // Check if the directory is readable
+        if (!is_readable($dir)) {
+            ErrorHandler::handleError('Cannot access the directory', 500);
+            return;
+        }
+
+        // Check if the directory is writable
+        if (!is_writable($dir)) {
+            ErrorHandler::handleError('Cannot write to directory', 500);
+            return;
+        }
+
+        // Sanitize the new base file name
+        $fileName = FileTool::sanitizeFile($fileName, $type);
+
+        // Extract the file extension and file name without extension
+        $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+        $fileName = pathinfo($fileName, PATHINFO_FILENAME);
+
+        $countFiles = 0;
+        $version = 1;
+
+        // Open the directory handle
+        if ($dh = opendir($dir)) {
+            // Iterate through the files in the directory
+            while (($file = readdir($dh)) !== false) {
+                // Exclude current directory (.) and parent directory (..)
+                if ($file != '.' && $file != '..') {
+                    // Generate the new file name with version number
+                    $newFile = $fileName . '_' . $version . '.' . $fileExtension;
+                    // Check if the file is readable and writable
+                    if (!is_readable($dir . '/' . $file) || !is_writable($dir . '/' . $file)) {
+                        $countFiles++;
+                    } else {
+                        // Rename the file
+                        rename($dir . '/' . $file, $dir . '/' . $newFile);
+                    }
+                    // Increment the version number for the next file
+                    $version++;
+                }
+            }
+            // Close the directory handle
+            closedir($dh);
+        }
+        // If there are files that couldn't be renamed, handle the error
+        if ($countFiles > 0) {
+            ErrorHandler::handleError("$countFiles files cannot be renamed.", 500);
+            return;
+        }
+    }
+
+    /**
      * Method for sanitizing directory names.
      * 
      * Removes special characters and normalizes the format of a directory path.
