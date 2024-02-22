@@ -323,6 +323,57 @@ class FileTool
     }
 
     /**
+     * Renames a directory or file.
+     * 
+     * Renames the specified directory or file to the new provided name or path.
+     * 
+     * @param  string      $oldPath The path of the directory or file to be renamed.
+     * @param  string      $newPath The new path or name for the directory or file.
+     * @param  string|null $type    Optional type of file to create. Default is null.
+     * 
+     * @return void               There is no explicit return.
+     */
+    public static function rename(string $oldPath, string $newPath, string $type = null): void
+    {
+        // Check if the old path exists
+        if (!is_dir($oldPath) && !file_exists($oldPath)) {
+            ErrorHandler::handleError('The directory and/or file doesn\'t exist.', 500);
+            return;
+        }
+
+        // Check if the old path and its parent directory are readable
+        if (!is_readable(dirname($oldPath)) || !is_readable($oldPath)) {
+            ErrorHandler::handleError('Cannot access the directory and/or file.', 500);
+            return;
+        }
+
+        // Check if the old path and its parent directory are writable
+        if (!is_writable(dirname($oldPath)) || !is_writable($oldPath)) {
+            ErrorHandler::handleError('Cannot write to directory and/or file.', 500);
+            return;
+        }
+
+        // Check if the new path has an extension; if not, sanitize it as a directory
+        if (!pathinfo($newPath, PATHINFO_EXTENSION)) {
+            $newPath = FileTool::sanitizeDirectory($newPath);
+        } else {
+            // If the new path has an extension, sanitize it as a file name
+            $file = pathinfo($newPath, PATHINFO_FILENAME) . '.' .
+            pathinfo($newPath, PATHINFO_EXTENSION);
+
+            $file = FileTool::sanitizeFile($file, $type);
+            $newPath = FileTool::sanitizeDirectory(dirname($newPath));
+
+            $newPath = $newPath . '/' . $file;
+        }
+        // Attempt to rename the old path to the new path
+        if (!rename($oldPath, $newPath)) {
+            ErrorHandler::handleError('It couldn\'t be renamed.', 500);
+            return;
+        }
+    }
+
+    /**
      * Method for sanitizing directory names.
      * 
      * Removes special characters and normalizes the format of a directory path.
