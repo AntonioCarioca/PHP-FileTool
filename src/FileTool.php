@@ -334,13 +334,17 @@ class FileTool
     private static function sanitizeDirectory(string $dir): string
     {
         // Remove special characters from the directory path
-        $dirSanitized = preg_replace('/[^a-zA-Z0-9\/]+/', '', $dir);
+        $dir = preg_replace('/[^a-zA-Z0-9\.\/]+/', '', $dir);
         // Normalize directory separators (e.g., // to /)
-        $dirSanitized = preg_replace('/\/+/', '/', $dirSanitized);
-        // Trim any trailing slashes from the directory path
-        $dirSanitized = trim($dirSanitized, '/');;
+        $dir = preg_replace('/\/+/', '/', $dir);
+        // Replace multiple dots with a single dot
+        $dir = preg_replace('/\.+/', '..', $dir);
+        // Remove trailing dots at the end of the path
+        $dir = preg_replace('/\...$/', '', $dir);
+        // Remove trailing slash at the end of the path
+        $dir = preg_replace('/\/$/', '', $dir);
         // Return the sanitized directory path
-        return $dirSanitized;
+        return $dir;
     }
 
     /**
