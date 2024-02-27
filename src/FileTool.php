@@ -381,6 +381,60 @@ class FileTool
     }
 
     /**
+     * Reads content from a file.
+     * 
+     * Reads the content of the specified file and returns it as a string.
+     * 
+     * @param  string $dir The path of the file to read from.
+     * 
+     * @return string|null      The content of the file as a string, or null if an 
+     *                          error occurs.
+     */
+    public static function read(string $dir): string|null
+    {
+        // Sanitize file path
+        $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
+               FileTool::sanitizeFile(basename($dir));
+
+        // Check if the directory exists
+        if (!is_dir(dirname($dir))) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return null;
+        }
+
+        // Check if the directory is writable
+        if (!is_writable(dirname($dir))) {
+            ErrorHandler::handleError('Cannot write to directory', 500);
+            return null;
+        }
+
+        // Check if the file exists
+        if (!file_exists($dir)) {
+            ErrorHandler::handleError('The file doesn\'t exist.', 500);
+            return null;
+        }
+
+        // Check if the file is readable
+        if (!is_readable($dir)) {
+            ErrorHandler::handleError('The file doesn\'t have read permission.', 500);
+            return null;
+        }
+
+        // Open the file for reading
+        if (!$file = fopen($dir, 'r')) {
+            ErrorHandler::handleError('The file couldn\'t be opened.', 500);
+            return null;
+        }
+
+        // Read the content of the file
+        $content = fread($file, filesize($dir));
+        // Close the file
+        fclose($file);
+        // Return the content of the file
+        return $content;
+    }
+
+    /**
      * Removes an empty directory.
      * 
      * Removes the specified directory if it is empty.
