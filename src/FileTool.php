@@ -657,6 +657,41 @@ class FileTool
     }
 
     /**
+     * Retrieves a list of files in a directory.
+     * 
+     * Retrieves an array containing the names of files within the specified 
+     * directory. The function excludes the '.' and '..' directories from the list.
+     * 
+     * @param  string $dir The path of the directory to retrieve files from.
+     * 
+     * @return array|null      An array of file names, or null if an error occurs.
+     */
+    public static function show(string $dir): array|null
+    {
+        // Sanitize directory path
+        $dir = FileTool::sanitizeDirectory($dir);
+
+        // Check if the directory exists
+        if (!is_dir($dir)) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return null;
+        }
+
+        // Check if the directory is readable
+        if (!is_readable($dir)) {
+            ErrorHandler::handleError('Cannot access the directory', 500);
+            return null;
+        }
+
+        // Get the list of files in the directory
+        $files = scandir($dir);
+        // Exclude '.' and '..' directories from the list
+        $files = array_diff($files, ['..', '.']);
+        // Returns an array with the files 
+        return $files;
+    }
+
+    /**
      * Method for sanitizing directory names.
      * 
      * Removes special characters and normalizes the format of a directory path.
