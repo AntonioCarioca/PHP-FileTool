@@ -107,69 +107,143 @@ class FileTool
      * Creates a specified number of files with sequential names in the given
      * directory provided, if they don't already exist.
      * 
-     * @param  string      $dir      The path of the directory where the files will 
-     *                               be created.
-     * @param  string      $file     The base name of the files to be created.
-     * @param  string|null $type     Optional type of files to be created. Default 
-     *                               is null.
-     * @param  int         $quantity The number of files to be created.
+     * @param string      $dir      The path of the directory where the files will 
+     *                              be created.
+     * @param string      $file     The base name of the files to be created.
+     * @param string|null $type     Optional type of files to be created. Default 
+     *                              is null.
+     * @param int         $quantity The number of files to be created.
      * 
      * @return void                There is no explicit feedback.
      */
     public static function createMany(string $dir, string $file, string $type = null, int $quantity): void
     {
-    	// Sanitize the directory and file names
-    	$dir = FileTool::sanitizeDirectory($dir);
-		$file = FileTool::sanitizeFile($file, $type);
+        // Sanitize the directory and file names
+        $dir = FileTool::sanitizeDirectory($dir);
+        $file = FileTool::sanitizeFile($file, $type);
 
-		// Check if the quantity is valid
-		if ($quantity <= 0) {
-			ErrorHandler::handleError('The quantity cannot be 0 and/or negative.', 500);
-			return;
-		}
+        // Check if the quantity is valid
+        if ($quantity <= 0) {
+            ErrorHandler::handleError('The quantity cannot be 0 and/or negative.', 500);
+            return;
+        }
 
-		// Create the directory if it doesn't exist
-		if (!is_dir($dir)) {
-			FileTool::createDir($dir, 0777, true);
-		}
+        // Create the directory if it doesn't exist
+        if (!is_dir($dir)) {
+            FileTool::createDir($dir, 0777, true);
+        }
 
-		// Check if the directory is readable
-		if (!is_readable($dir)) {
-			ErrorHandler::handleError('Cannot access the directory', 500);
-			return;
-		}
+        // Check if the directory is readable
+        if (!is_readable($dir)) {
+            ErrorHandler::handleError('Cannot access the directory', 500);
+            return;
+        }
 
-		// Check if the directory is writable
-		if (!is_writable($dir)) {
-			ErrorHandler::handleError('Cannot write to directory', 500);
-			return;
-		}
+        // Check if the directory is writable
+        if (!is_writable($dir)) {
+            ErrorHandler::handleError('Cannot write to directory', 500);
+            return;
+        }
 
-		// Construct the full path of the file
-		$fileFull = $dir . '/' . $file;
-		// Extract the file extension and file name without extension
-		$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-		$fileName = pathinfo($file, PATHINFO_FILENAME);
+        // Construct the full path of the file
+        $fileFull = $dir . '/' . $file;
+        // Extract the file extension and file name without extension
+        $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+        $fileName = pathinfo($file, PATHINFO_FILENAME);
 
-		// Check if the base file already exists
-		if (file_exists($fileFull)) {
-			ErrorHandler::handleError('The file already exists.', 500);
-			return;
-		}
+        // Check if the base file already exists
+        if (file_exists($fileFull)) {
+            ErrorHandler::handleError('The file already exists.', 500);
+            return;
+        }
 
-		// Create the specified number of files with sequential names
-		for ($i = 1; $i <= $quantity; $i++) {
-			// Attempt to create the file
-			if (!fopen($fileFull, 'w')) {
-				ErrorHandler::handleError('The file could not be created', 500);
-				return;
-			}
-			// Generate the next file name for the next iteration
-			$fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
-		}
+        // Create the specified number of files with sequential names
+        for ($i = 1; $i <= $quantity; $i++) {
+            // Attempt to create the file
+            if (!fopen($fileFull, 'w')) {
+                ErrorHandler::handleError('The file could not be created', 500);
+                return;
+            }
+            // Generate the next file name for the next iteration
+            $fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
+        }
 
-		// Clear stat cache
-		clearstatcache();
+        // Clear stat cache
+        clearstatcache();
+    }
+
+    /**
+     * Copies a file to a new location.
+     * 
+     * Copies the file from the specified origin to the provided destination. 
+     * If the destination directory doesn't exist, it will be created. If a file
+     * with the same name already exists in the destination directory, a unique name
+     * will be generated by appending a numerical suffix.
+     * 
+     * @param string $origin  The path of the file to be copied.
+     * @param string $destiny The destination path where the file will be copied.
+     * 
+     * @return void            There is no explicit return.
+     */
+    public static function copy(string $origin, string $destiny): void
+    {
+        // Check if the origin directory and file exist
+        if (!is_dir(dirname($origin)) || !file_exists($origin)) {
+            ErrorHandler::handleError('The directory and/or file doesn\'t exist.', 500);
+            return;
+        }
+
+        // Check if the origin directory is writable
+        if (!is_writable(dirname($origin))) {
+            ErrorHandler::handleError('Cannot write to directory.', 500);
+            return;
+        }
+
+        // Check if the origin file is readable
+        if (!is_readable($origin)) {
+            ErrorHandler::handleError('Cannot access the file.', 500);
+            return;
+        }
+
+        // Sanitize the destination directory path
+        $destiny = FileTool::sanitizeDirectory($destiny);
+
+        // Create the destination directory if it doesn't exist
+        if (!is_dir($destiny)) {
+            FileTool::createDir($destiny, 0777, true);
+        }
+
+        // Initialize counter for generating unique file names
+        $i = 1;
+        // Extract file name and extension
+        $fileName = pathinfo(basename($origin), PATHINFO_FILENAME);
+        $fileExtension = pathinfo(basename($origin), PATHINFO_EXTENSION);
+
+        // Open the destination directory
+        if ($dir = opendir($destiny)) {
+            // Iterate through files in the destination directory
+            while (($file = readdir($dir)) !== false) {
+                // Exclude current directory (.) and parent directory (..)
+                if ($file != '.' && $file != '..') {
+                    // Check if a file with the same name already exists
+                    if (file_exists($destiny . '/' . basename($origin))) {
+                        // Generate a unique file name
+                        $newFile = $fileName . '(' . $i . ')' . '.' . $fileExtension;
+                        $i++;
+                    }
+                }
+            }
+            // Close the destination directory
+            closedir($dir);
+        }
+
+        // Copy the file to the destination with a unique name if necessary
+        if (isset($newFile)) {
+            copy($origin, $destiny . '/' . $newFile);
+        } else {
+            copy($origin, $destiny . '/' . basename($origin));
+        }
+
     }
 
     /**
@@ -177,38 +251,38 @@ class FileTool
      * 
      * Removes the specified directory if it is empty.
      * 
-     * @param  string $dir The path of the directory to be removed.
+     * @param string $dir The path of the directory to be removed.
      * 
      * @return void      There is no explicit feedback.
      */
     public static function removeDir(string $dir): void
     {
-    	// Check if the directory exists
-    	if (!is_dir($dir)) {
-			ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-			return;
-		}
+        // Check if the directory exists
+        if (!is_dir($dir)) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return;
+        }
 
-		// Check if the parent directory is readable
-		if (!is_readable(dirname($dir))) {
-			ErrorHandler::handleError('Cannot access the directory.', 500);
-			return;
-		}
+        // Check if the parent directory is readable
+        if (!is_readable(dirname($dir))) {
+            ErrorHandler::handleError('Cannot access the directory.', 500);
+            return;
+        }
 
-		// Check if the parent directory is writable
-		if (!is_writable(dirname($dir))) {
-			ErrorHandler::handleError('Cannot write to directory.', 500);
-			return;
-		}
+        // Check if the parent directory is writable
+        if (!is_writable(dirname($dir))) {
+            ErrorHandler::handleError('Cannot write to directory.', 500);
+            return;
+        }
 
-		// Check if the directory is empty
-		if (count(scandir($dir)) !== 2) {
-			ErrorHandler::handleError('The directory is not empty or an error occurred when deleting the directory.', 500);
-			return;
-		}
+        // Check if the directory is empty
+        if (count(scandir($dir)) !== 2) {
+            ErrorHandler::handleError('The directory is not empty or an error occurred when deleting the directory.', 500);
+            return;
+        }
 
-		// Remove the directory
-		rmdir($dir);
+        // Remove the directory
+        rmdir($dir);
     }
 
     /**
@@ -216,50 +290,50 @@ class FileTool
      * 
      * Removes the specified file, if it exists.
      * 
-     * @param  string $path The path of the file to be removed.
+     * @param string $path The path of the file to be removed.
      * 
      * @return void       There is no explicit feedback.
      */
     public static function removeFile(string $path): void
     {
-    	// Check if the directory of the file exists
-    	if (!is_dir(dirname($path))) {
-			ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-			return;
-		}
+        // Check if the directory of the file exists
+        if (!is_dir(dirname($path))) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return;
+        }
 
-		// Check if the parent directory is readable
-		if (!is_readable(dirname($path))) {
-			ErrorHandler::handleError('Cannot access the directory.', 500);
-			return;
-		}
+        // Check if the parent directory is readable
+        if (!is_readable(dirname($path))) {
+            ErrorHandler::handleError('Cannot access the directory.', 500);
+            return;
+        }
 
-		// Check if the parent directory is writable
-		if (!is_writable(dirname($path))) {
-			ErrorHandler::handleError('Cannot write to directory.', 500);
-			return;
-		}
+        // Check if the parent directory is writable
+        if (!is_writable(dirname($path))) {
+            ErrorHandler::handleError('Cannot write to directory.', 500);
+            return;
+        }
 
-		// Check if the file exists
-		if (!file_exists($path)) {
-			ErrorHandler::handleError('The file doesn\'t exist.', 500);
-			return;
-		}
+        // Check if the file exists
+        if (!file_exists($path)) {
+            ErrorHandler::handleError('The file doesn\'t exist.', 500);
+            return;
+        }
 
-		// Check if it's a regular file
-		if (!is_file($path)) {
-			ErrorHandler::handleError('It\'s not a file.', 500);
-			return;
-		}
+        // Check if it's a regular file
+        if (!is_file($path)) {
+            ErrorHandler::handleError('It\'s not a file.', 500);
+            return;
+        }
 
-		// Check if the file is writable
-		if (!is_writable($path)) {
-			ErrorHandler::handleError('The file cannot be deleted because it is not writable.', 500);
-			return;
-		}
+        // Check if the file is writable
+        if (!is_writable($path)) {
+            ErrorHandler::handleError('The file cannot be deleted because it is not writable.', 500);
+            return;
+        }
 
-		// Remove the file
-		unlink($path);
+        // Remove the file
+        unlink($path);
     }
 
     /**
@@ -268,7 +342,7 @@ class FileTool
      * Removes all files within the specified directory, if they exist,
      * and then removes the directory itself.
      * 
-     * @param  string $dir The path of the directory to be removed.
+     * @param string $dir The path of the directory to be removed.
      * 
      * @return void      There is no explicit feedback.
      */
@@ -327,9 +401,9 @@ class FileTool
      * 
      * Renames the specified directory or file to the new provided name or path.
      * 
-     * @param  string      $oldPath The path of the directory or file to be renamed.
-     * @param  string      $newPath The new path or name for the directory or file.
-     * @param  string|null $type    Optional type of file to create. Default is null.
+     * @param string      $oldPath The path of the directory or file to be renamed.
+     * @param string      $newPath The new path or name for the directory or file.
+     * @param string|null $type    Optional type of file to create. Default is null.
      * 
      * @return void               There is no explicit return.
      */
@@ -381,11 +455,11 @@ class FileTool
      * file name and assigns sequential numbering to each file. Optionally, a file 
      * type can be specified.
      * 
-     * @param  string      $dir      The path of the directory containing the files 
-     *                               to be renamed.
-     * @param  string      $fileName The base name for the files to be renamed.
-     * @param  string|null $type     Optional type of the files to be renamed. 
-     *                               Default is null.
+     * @param string      $dir      The path of the directory containing the files 
+     *                              to be renamed.
+     * @param string      $fileName The base name for the files to be renamed.
+     * @param string|null $type     Optional type of the files to be renamed. 
+     *                              Default is null.
      * 
      * @return void                There is no explicit return.
      */
@@ -611,23 +685,23 @@ class FileTool
      * Converts the filename to PascalCase, capitalizing the first letter of each
      * word and removing whitespace.
      * 
-     * @param  string $file The name of the file to be converted.
+     * @param string $file The name of the file to be converted.
      * 
      * @return string       The file name is converted to PascalCase.
      */
     private static function toPascal(string $file): string
     {
-    	// Convert the file name to title case (PascalCase)
-    	$file = mb_convert_case($file, MB_CASE_TITLE, 'UTF-8');
-    	// Remove any whitespace from the file name
-		$file = preg_replace('/\s+/', '', $file);
-		// Extract the file extension and convert it to lowercase
-		$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-		$fileExtension = strtolower($fileExtension);
-		// Replace the file extension in the filename
-		$newFile = str_replace('.' . $fileExtension, '.' . $fileExtension, $file);
-		// Return the converted file name
-		return $newFile;
+        // Convert the file name to title case (PascalCase)
+        $file = mb_convert_case($file, MB_CASE_TITLE, 'UTF-8');
+        // Remove any whitespace from the file name
+        $file = preg_replace('/\s+/', '', $file);
+        // Extract the file extension and convert it to lowercase
+        $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+        $fileExtension = strtolower($fileExtension);
+        // Replace the file extension in the filename
+        $newFile = str_replace('.' . $fileExtension, '.' . $fileExtension, $file);
+        // Return the converted file name
+        return $newFile;
     }
 
     /**
@@ -635,17 +709,17 @@ class FileTool
      * 
      * Converts all letters in the filename to uppercase and removes blank spaces.
      * 
-     * @param  string $file The name of the file to be converted.
+     * @param string $file The name of the file to be converted.
      * 
      * @return string       The name of the file converted to upper case.
      */
     private static function toUpper(string $file): string
     {
-    	// Convert the file name to uppercase
-    	$file = mb_convert_case($file, MB_CASE_UPPER, "UTF-8");
-    	// Remove any spaces from the file name
-		$file = preg_replace('/\s+/', '', $file);
-		// Return the uppercase file name
-		return $file;
+        // Convert the file name to uppercase
+        $file = mb_convert_case($file, MB_CASE_UPPER, "UTF-8");
+        // Remove any spaces from the file name
+        $file = preg_replace('/\s+/', '', $file);
+        // Return the uppercase file name
+        return $file;
     }
 }
