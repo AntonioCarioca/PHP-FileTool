@@ -692,6 +692,68 @@ class FileTool
     }
 
     /**
+     * Writes content to a file.
+     * 
+     * Writes the specified content to a file. The method allows for appending
+     * content to an existing file or overwriting its contents based on the value
+     * of the $overwrite parameter.
+     * 
+     * @param  string      $dir       The path of the file to write to.
+     * @param  string      $content   The content to write to the file.
+     * @param  int|integer $overwrite Determines whether to overwrite the file's
+     *                                content (1) or append to it (0). Default is 0.
+     * 
+     * @return void                 There is no explicit return value.
+     */
+    public static function write(string $dir, string $content ,int $overwrite = 0): void
+    {
+        // Sanitize file path
+        $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
+               FileTool::sanitizeFile(basename($dir));
+
+        // Check if the file and its directory exist
+        if (!is_dir(dirname($dir)) || !file_exists($dir)) {
+            ErrorHandler::handleError('The file and/or directory doesn\'t exist', 500);
+            return;
+        }
+
+        // Check if the file and its directory are writable
+        if (!is_writable(dirname($dir)) || !is_writable($dir)) {
+            ErrorHandler::handleError('The file and/or directory do not have write permission.', 500);
+            return;
+        }
+
+        // Determine whether to append or overwrite content based on the $overwrite
+        // parameter
+        if ($overwrite === 0) {
+            // Append content to the file
+            if ($file = fopen($dir, 'a')) {
+                fwrite($file, $content);
+            } else {
+                // Handle error if the file couldn't be opened for appending
+                ErrorHandler::handleError('The file couldn\'t be opened.', 500);
+                return;
+            }
+        } elseif ($overwrite === 1) {
+            // Overwrite content of the file
+            if ($file = fopen($dir, 'w')) {
+                fwrite($file, $content);
+            } else {
+                // Handle error if the file couldn't be opened for writing
+                ErrorHandler::handleError('The file couldn\'t be opened.', 500);
+                return;
+            }
+        } else {
+            // Handle error if the value of $overwrite is invalid
+            ErrorHandler::handleError('The overwrite parameter only accepts 0 or 1.', 500);
+            return;
+        }
+
+        // Close the file
+        fclose($file);
+    }
+
+    /**
      * Method for sanitizing directory names.
      * 
      * Removes special characters and normalizes the format of a directory path.
