@@ -247,6 +247,69 @@ class FileTool
     }
 
     /**
+     * Copies all files from one directory to another.
+     * 
+     * Copies all files from the specified origin directory to the provided 
+     * destination directory. If the destination directory doesn't exist, it will be
+     * created. Existing files in the destination directory will not be overwritten.
+     * 
+     * @param  string $origin  The path of the directory containing the files to be
+     *                         copied.
+     * @param  string $destiny The destination directory where the files will be 
+     *                         copied.
+     * 
+     * @return void          There is no explicit return.
+     */
+    public static function copyAll(string $origin, string $destiny): void
+    {
+        // Check if the origin directory exists
+        if (!is_dir($origin)) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return;
+        }
+
+        // Check if the origin directory is writable
+        if (!is_writable($origin)) {
+            ErrorHandler::handleError('Cannot write to directory.', 500);
+            return;
+        }
+
+        // Sanitize the destination directory path
+        $destiny = FileTool::sanitizeDirectory($destiny);
+
+        // Create the destination directory if it doesn't exist
+        if (!is_dir($destiny)) {
+            FileTool::createDir($destiny, 0777, true);
+        }
+
+        // Get list of files in the origin directory
+        $files = scandir($origin);
+        // Initialize counter for files that couldn't be copied
+        $countFiles = 0;
+
+        // Iterate through each file in the origin directory
+        foreach ($files as $file) {
+            // Check if the item is a file
+            if (is_file($origin . '/' . $file)) {
+                // Check if the file is readable and doesn't exist in the destination
+                if (is_readable($origin . '/' . $file) && !file_exists($destiny . '/' . $file)) {
+                    // Copy the file to the destination directory
+                    copy($origin . '/' . $file, $destiny . '/' . $file);
+                } else {
+                    // Increment counter if the file couldn't be copied
+                    $countFiles++;
+                }
+            }
+        }
+
+        // If there are files that couldn't be copied, handle the error
+        if ($countFiles > 0) {
+            ErrorHandler::handleError("$countFiles files cannot be copied.", 500);
+            return;
+        }
+    }
+
+    /**
      * Removes an empty directory.
      * 
      * Removes the specified directory if it is empty.
