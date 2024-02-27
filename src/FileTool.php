@@ -310,6 +310,77 @@ class FileTool
     }
 
     /**
+     * Copies the content of one file to another.
+     * 
+     * Copies the content of the source file to the destination file. If the 
+     * destination file does not exist, it will be created. If the destination file
+     * already exists, its content will be overwritten.
+     * 
+     * @param  string $fileOrigin  The path of the source file.
+     * @param  string $fileDestiny The path of the destination file.
+     * 
+     * @return void              There is no explicit return.
+     */
+    public static function copyContent(string $fileOrigin, string $fileDestiny): void
+    {
+        // Sanitize fileOrigin paths
+        $fileOrigin = FileTool::sanitizeDirectory(dirname($fileOrigin)) . '/' .
+                      FileTool::sanitizeFile(basename($fileOrigin));
+
+        // Sanitize fileDestiny paths
+        $fileDestiny = FileTool::sanitizeDirectory(dirname($fileDestiny)) . '/' .
+                       FileTool::sanitizeFile(basename($fileDestiny));
+
+        // Check if the source file and its directory exist
+        if (!file_exists($fileOrigin) || !is_dir(dirname($fileOrigin))) {
+            ErrorHandler::handleError('The source file and/or directory does not exist.', 500);
+            return;
+        }
+
+        // Check if the source file and its directory are readable
+        if (!is_readable($fileOrigin) || !is_readable(dirname($fileOrigin))) {
+            ErrorHandler::handleError('The source file and/or directory is not accessible.', 500);
+            return;
+        }
+
+        // Create the directory for the destination file if it doesn't exist
+        if (!is_dir(dirname($fileDestiny))) {
+            FileTool::createDir(dirname($fileDestiny));
+        }
+
+        // Create the destination file if it doesn't exist
+        if (!file_exists($fileDestiny)) {
+            FileTool::createFile(dirname($fileDestiny), basename($fileDestiny));
+        }
+
+        // Check if the destination file and its directory are writable
+        if (!is_writable($fileDestiny) || !is_writable(dirname($fileDestiny))) {
+            ErrorHandler::handleError('The target file and/or directory does not have write permission.', 500);
+            return;
+        }
+
+        // Read the content of the source file
+        $content = file_get_contents($fileOrigin);
+
+        // Check if content is successfully read
+        if ($content === false) {
+            ErrorHandler::handleError('Error reading the contents of the source file.', 500);
+            return;
+        }
+
+        // Open the destination file for writing
+        if (!$file = fopen($fileDestiny, 'w')) {
+            ErrorHandler::handleError('Error opening the destination file for writing.', 500);
+            return;
+        }
+        
+        // Write the content to the destination file
+        fwrite($file, $content);
+        // Close the destination file
+        fclose($file);
+    }
+
+    /**
      * Removes an empty directory.
      * 
      * Removes the specified directory if it is empty.
