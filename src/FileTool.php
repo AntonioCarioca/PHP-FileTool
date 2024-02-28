@@ -381,6 +381,59 @@ class FileTool
     }
 
     /**
+     * Purges a directory.
+     * 
+     * Recursively deletes all files and subdirectories within the specified 
+     * directory.
+     * 
+     * @param  string $dir The path of the directory to purge.
+     * 
+     * @return void      No return value.
+     */
+    public static function purge(string $dir): void
+    {
+        // Sanitize the directory path
+        $dir = FileTool::sanitizeDirectory($dir);
+
+        // Check if the directory exists
+        if (!is_dir($dir)) {
+            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
+            return;
+        }
+
+        // Check if the directory is writable
+        if (!is_writable($dir)) {
+            ErrorHandler::handleError('The directory doesn\'t have write permission.', 500);
+            return;
+        }
+
+        // Get the list of files and directories in the directory
+        $items = scandir($dir);
+        // Remove '.' and '..' from the list of files
+        $items = array_diff($items, ['.','..']);
+
+        // Iterate over each file and subdirectory
+        foreach ($items as $item) {
+            // Create the full path to the item
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            // Recursively purge subdirectories
+            if (is_dir($path)) {
+                self::purge($path);
+            } else {
+                // Check if the file is writable before deletion
+                if (!is_writable($path)) {
+                    ErrorHandler::handleError('There are files that cannot be deleted.', 500);
+                    return;
+                }
+                // Delete the file
+                unlink($path);
+            }
+        }
+        // Remove the directory itself after all its contents are deleted
+        rmdir($dir);
+    }
+
+    /**
      * Reads content from a file.
      * 
      * Reads the content of the specified file and returns it as a string.
