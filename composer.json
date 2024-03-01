@@ -1,0 +1,24 @@
+{
+	"name": "phpfiletool/filetool",
+	"description": "Library containing the main functions of the PHP file system.",
+	"type": "library",
+	"homepage": "https://xxzeroxx.serv00.net/",
+	"license": "GPL-3.0-or-later",
+	"autoload": {
+		"psr-4": {
+			"PHPFileTool\\FileTool\\": "src/"
+		}
+	},
+	"authors":	[
+		{
+			"name": "Antonio Silva",
+            "email": "a.silva@mailfence.com",
+            "homepage": "https://antoniosilva.hashnode.dev/",
+            "role": "Systems Development Technician and PHP Developer"
+		}	
+	],
+	"minimum-stability": "stable",
+    "require": {
+        "php": "^8.0"
+    }
+}
