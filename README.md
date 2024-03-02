@@ -27,7 +27,7 @@ require vendor/autoload.php;
 
 use PHPFileTool\FileTool\FileTool;
 
-\\ Create a new file
+// Create a new file
 FileTool::createFile(dir:'test', file:'text.txt');
 ```
 
