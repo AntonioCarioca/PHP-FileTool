@@ -38,8 +38,7 @@ class FileTool
         // Check if the directory already exists
         if (is_dir($dir)) {
             // If the directory exists, handle the error and return
-            ErrorHandler::handleError('The directory already exists', 500);
-            return;
+            throw new \RuntimeException('The directory already exists');
         }
 
         // Create the directory with the specified permissions
@@ -67,19 +66,17 @@ class FileTool
 
         // Create the directory if it doesn't exist
         if (!is_dir($dir)) {
-            FileTool::createDir($dir, 0777, true);
+            FileTool::createDir($dir, 0777);
         }
 
         // Check if the directory is readable
         if (!is_readable($dir)) {
-            ErrorHandler::handleError('Cannot access the directory', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory');
         }
 
         // Check if the directory is writable
         if (!is_writable($dir)) {
-            ErrorHandler::handleError('Cannot write to directory', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory');
         }
 
         // Construct the full path of the file
@@ -87,14 +84,12 @@ class FileTool
 
         // Check if the file already exists
         if (file_exists($fileFull)) {
-            ErrorHandler::handleError('The file already exists.', 500);
-            return;
+            throw new \RuntimeException('The file already exists.');
         }
 
         // Attempt to create the file
         if (!fopen($fileFull, 'w')) {
-            ErrorHandler::handleError('The file could not be created', 500);
-            return;
+            throw new \RuntimeException('The file could not be created');
         }
 
         // Clear stat cache
@@ -124,25 +119,22 @@ class FileTool
 
         // Check if the quantity is valid
         if ($quantity <= 0) {
-            ErrorHandler::handleError('The quantity cannot be 0 and/or negative.', 500);
-            return;
+            throw new \InvalidArgumentException('The quantity cannot be 0 and/or negative.');
         }
 
         // Create the directory if it doesn't exist
         if (!is_dir($dir)) {
-            FileTool::createDir($dir, 0777, true);
+            FileTool::createDir($dir, 0777);
         }
 
         // Check if the directory is readable
         if (!is_readable($dir)) {
-            ErrorHandler::handleError('Cannot access the directory', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory');
         }
 
         // Check if the directory is writable
         if (!is_writable($dir)) {
-            ErrorHandler::handleError('Cannot write to directory', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory');
         }
 
         // Construct the full path of the file
@@ -153,16 +145,14 @@ class FileTool
 
         // Check if the base file already exists
         if (file_exists($fileFull)) {
-            ErrorHandler::handleError('The file already exists.', 500);
-            return;
+            throw new \RuntimeException('The file already exists.');
         }
 
         // Create the specified number of files with sequential names
         for ($i = 1; $i <= $quantity; $i++) {
             // Attempt to create the file
             if (!fopen($fileFull, 'w')) {
-                ErrorHandler::handleError('The file could not be created', 500);
-                return;
+                throw new \RuntimeException('The file could not be created');
             }
             // Generate the next file name for the next iteration
             $fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
@@ -189,20 +179,17 @@ class FileTool
     {
         // Check if the origin directory and file exist
         if (!is_dir(dirname($origin)) || !file_exists($origin)) {
-            ErrorHandler::handleError('The directory and/or file doesn\'t exist.', 500);
-            return;
+           throw new \RuntimeException('The directory and/or file doesn\'t exist.');
         }
 
         // Check if the origin directory is writable
         if (!is_writable(dirname($origin))) {
-            ErrorHandler::handleError('Cannot write to directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory.');
         }
 
         // Check if the origin file is readable
         if (!is_readable($origin)) {
-            ErrorHandler::handleError('Cannot access the file.', 500);
-            return;
+            throw new \RuntimeException('Cannot access the file.');
         }
 
         // Sanitize the destination directory path
@@ -210,7 +197,7 @@ class FileTool
 
         // Create the destination directory if it doesn't exist
         if (!is_dir($destiny)) {
-            FileTool::createDir($destiny, 0777, true);
+            FileTool::createDir($destiny, 0777);
         }
 
         // Initialize counter for generating unique file names
@@ -263,14 +250,12 @@ class FileTool
     {
         // Check if the origin directory exists
         if (!is_dir($origin)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the origin directory is writable
         if (!is_writable($origin)) {
-            ErrorHandler::handleError('Cannot write to directory.', 500);
-            return;
+           throw new \RuntimeException('Cannot write to directory.');
         }
 
         // Sanitize the destination directory path
@@ -278,7 +263,7 @@ class FileTool
 
         // Create the destination directory if it doesn't exist
         if (!is_dir($destiny)) {
-            FileTool::createDir($destiny, 0777, true);
+            FileTool::createDir($destiny, 0777);
         }
 
         // Get list of files in the origin directory
@@ -303,8 +288,7 @@ class FileTool
 
         // If there are files that couldn't be copied, handle the error
         if ($countFiles > 0) {
-            ErrorHandler::handleError("$countFiles files cannot be copied.", 500);
-            return;
+            throw new \RuntimeException("$countFiles files cannot be copied.");
         }
     }
 
@@ -332,14 +316,12 @@ class FileTool
 
         // Check if the source file and its directory exist
         if (!file_exists($fileOrigin) || !is_dir(dirname($fileOrigin))) {
-            ErrorHandler::handleError('The source file and/or directory does not exist.', 500);
-            return;
+            throw new \RuntimeException('The source file and/or directory does not exist.');
         }
 
         // Check if the source file and its directory are readable
         if (!is_readable($fileOrigin) || !is_readable(dirname($fileOrigin))) {
-            ErrorHandler::handleError('The source file and/or directory is not accessible.', 500);
-            return;
+            throw new \RuntimeException('The source file and/or directory is not accessible.');
         }
 
         // Create the directory for the destination file if it doesn't exist
@@ -354,8 +336,9 @@ class FileTool
 
         // Check if the destination file and its directory are writable
         if (!is_writable($fileDestiny) || !is_writable(dirname($fileDestiny))) {
-            ErrorHandler::handleError('The target file and/or directory does not have write permission.', 500);
-            return;
+            throw new \RuntimeException(
+                'The target file and/or directory does not have write permission.'
+            );
         }
 
         // Read the content of the source file
@@ -363,14 +346,12 @@ class FileTool
 
         // Check if content is successfully read
         if ($content === false) {
-            ErrorHandler::handleError('Error reading the contents of the source file.', 500);
-            return;
+            throw new \RuntimeException('Error reading the contents of the source file.');
         }
 
         // Open the destination file for writing
         if (!$file = fopen($fileDestiny, 'w')) {
-            ErrorHandler::handleError('Error opening the destination file for writing.', 500);
-            return;
+            throw new \RuntimeException('Error opening the destination file for writing.');
         }
 
         // Write the content to the destination file
@@ -396,14 +377,12 @@ class FileTool
 
         // Check if the directory exists
         if (!is_dir($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the directory is writable
         if (!is_writable($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t have write permission.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t have write permission.');
         }
 
         // Get the list of files and directories in the directory
@@ -421,8 +400,7 @@ class FileTool
             } else {
                 // Check if the file is writable before deletion
                 if (!is_writable($path)) {
-                    ErrorHandler::handleError('There are files that cannot be deleted.', 500);
-                    return;
+                    throw new \RuntimeException('There are files that cannot be deleted.');
                 }
                 // Delete the file
                 unlink($path);
@@ -439,10 +417,9 @@ class FileTool
      *
      * @param string $dir The path of the file to read from.
      *
-     * @return string|null      The content of the file as a string, or null if an
-     *                          error occurs.
+     * @return string      The content of the file as a string.
      */
-    public static function read(string $dir): string|null
+    public static function read(string $dir): string
     {
         // Sanitize file path
         $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
@@ -450,32 +427,27 @@ class FileTool
 
         // Check if the directory exists
         if (!is_dir(dirname($dir))) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return null;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the directory is writable
         if (!is_writable(dirname($dir))) {
-            ErrorHandler::handleError('Cannot write to directory', 500);
-            return null;
+            throw new \RuntimeException('Cannot write to directory');
         }
 
         // Check if the file exists
         if (!file_exists($dir)) {
-            ErrorHandler::handleError('The file doesn\'t exist.', 500);
-            return null;
+            throw new \RuntimeException('The file doesn\'t exist.');
         }
 
         // Check if the file is readable
         if (!is_readable($dir)) {
-            ErrorHandler::handleError('The file doesn\'t have read permission.', 500);
-            return null;
+            throw new \RuntimeException('The file doesn\'t have read permission.');
         }
 
         // Open the file for reading
         if (!$file = fopen($dir, 'r')) {
-            ErrorHandler::handleError('The file couldn\'t be opened.', 500);
-            return null;
+            throw new \RuntimeException('The file couldn\'t be opened.');
         }
 
         // Read the content of the file
@@ -499,26 +471,22 @@ class FileTool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the parent directory is readable
         if (!is_readable(dirname($dir))) {
-            ErrorHandler::handleError('Cannot access the directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory.');
         }
 
         // Check if the parent directory is writable
         if (!is_writable(dirname($dir))) {
-            ErrorHandler::handleError('Cannot write to directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory.');
         }
 
         // Check if the directory is empty
         if (count(scandir($dir)) !== 2) {
-            ErrorHandler::handleError('The directory is not empty.', 500);
-            return;
+            throw new \RuntimeException('The directory is not empty.');
         }
 
         // Remove the directory
@@ -538,38 +506,32 @@ class FileTool
     {
         // Check if the directory of the file exists
         if (!is_dir(dirname($path))) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the parent directory is readable
         if (!is_readable(dirname($path))) {
-            ErrorHandler::handleError('Cannot access the directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory.');
         }
 
         // Check if the parent directory is writable
         if (!is_writable(dirname($path))) {
-            ErrorHandler::handleError('Cannot write to directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory.');
         }
 
         // Check if the file exists
         if (!file_exists($path)) {
-            ErrorHandler::handleError('The file doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The file doesn\'t exist.');
         }
 
         // Check if it's a regular file
         if (!is_file($path)) {
-            ErrorHandler::handleError('It\'s not a file.', 500);
-            return;
+            throw new \RuntimeException('It\'s not a file.');
         }
 
         // Check if the file is writable
         if (!is_writable($path)) {
-            ErrorHandler::handleError('The file cannot be deleted because it is not writable.', 500);
-            return;
+            throw new \RuntimeException('The file cannot be deleted because it is not writable.');
         }
 
         // Remove the file
@@ -590,20 +552,17 @@ class FileTool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the parent directory is readable
         if (!is_readable(dirname($dir))) {
-            ErrorHandler::handleError('Cannot access the directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory.');
         }
 
         // Check if the parent directory is writable
         if (!is_writable(dirname($dir))) {
-            ErrorHandler::handleError('Cannot write to directory.', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory.');
         }
 
         // Get the list of files in the directory
@@ -628,8 +587,7 @@ class FileTool
 
         // If there are files that couldn't be deleted, handle the error
         if ($countFiles > 0) {
-            ErrorHandler::handleError("$countFiles files could not be deleted.", 500);
-            return;
+            throw new \RuntimeException("$countFiles files could not be deleted.");
         }
 
         // Remove the directory
@@ -651,20 +609,17 @@ class FileTool
     {
         // Check if the old path exists
         if (!is_dir($oldPath) && !file_exists($oldPath)) {
-            ErrorHandler::handleError('The directory and/or file doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory and/or file doesn\'t exist.');
         }
 
         // Check if the old path and its parent directory are readable
         if (!is_readable(dirname($oldPath)) || !is_readable($oldPath)) {
-            ErrorHandler::handleError('Cannot access the directory and/or file.', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory and/or file.');
         }
 
         // Check if the old path and its parent directory are writable
         if (!is_writable(dirname($oldPath)) || !is_writable($oldPath)) {
-            ErrorHandler::handleError('Cannot write to directory and/or file.', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory and/or file.');
         }
 
         // Check if the new path has an extension; if not, sanitize it as a directory
@@ -682,8 +637,7 @@ class FileTool
         }
         // Attempt to rename the old path to the new path
         if (!rename($oldPath, $newPath)) {
-            ErrorHandler::handleError('It couldn\'t be renamed.', 500);
-            return;
+            throw new \RuntimeException('It couldn\'t be renamed.');
         }
     }
 
@@ -707,20 +661,17 @@ class FileTool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the directory is readable
         if (!is_readable($dir)) {
-            ErrorHandler::handleError('Cannot access the directory', 500);
-            return;
+            throw new \RuntimeException('Cannot access the directory');
         }
 
         // Check if the directory is writable
         if (!is_writable($dir)) {
-            ErrorHandler::handleError('Cannot write to directory', 500);
-            return;
+            throw new \RuntimeException('Cannot write to directory');
         }
 
         // Sanitize the new base file name
@@ -757,8 +708,7 @@ class FileTool
         }
         // If there are files that couldn't be renamed, handle the error
         if ($countFiles > 0) {
-            ErrorHandler::handleError("$countFiles files cannot be renamed.", 500);
-            return;
+            throw new \RuntimeException("$countFiles files cannot be renamed.");
         }
     }
 
@@ -770,23 +720,21 @@ class FileTool
      *
      * @param string $dir The path of the directory to retrieve files from.
      *
-     * @return array|null      An array of file names, or null if an error occurs.
+     * @return array           An array of file names.
      */
-    public static function show(string $dir): array|null
+    public static function show(string $dir): array
     {
         // Sanitize directory path
         $dir = FileTool::sanitizeDirectory($dir);
 
         // Check if the directory exists
         if (!is_dir($dir)) {
-            ErrorHandler::handleError('The directory doesn\'t exist.', 500);
-            return null;
+            throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
         // Check if the directory is readable
         if (!is_readable($dir)) {
-            ErrorHandler::handleError('Cannot access the directory', 500);
-            return null;
+            throw new \RuntimeException('Cannot access the directory');
         }
 
         // Get the list of files in the directory
@@ -819,14 +767,12 @@ class FileTool
 
         // Check if the file and its directory exist
         if (!is_dir(dirname($dir)) || !file_exists($dir)) {
-            ErrorHandler::handleError('The file and/or directory doesn\'t exist', 500);
-            return;
+            throw new \RuntimeException('The file and/or directory doesn\'t exist');
         }
 
         // Check if the file and its directory are writable
         if (!is_writable(dirname($dir)) || !is_writable($dir)) {
-            ErrorHandler::handleError('The file and/or directory do not have write permission.', 500);
-            return;
+            throw new \RuntimeException('The file and/or directory do not have write permission.');
         }
 
         // Determine whether to append or overwrite content based on the $overwrite
@@ -837,8 +783,7 @@ class FileTool
                 fwrite($file, $content);
             } else {
                 // Handle error if the file couldn't be opened for appending
-                ErrorHandler::handleError('The file couldn\'t be opened.', 500);
-                return;
+                throw new \RuntimeException('The file couldn\'t be opened.');
             }
         } elseif ($overwrite === 1) {
             // Overwrite content of the file
@@ -846,13 +791,11 @@ class FileTool
                 fwrite($file, $content);
             } else {
                 // Handle error if the file couldn't be opened for writing
-                ErrorHandler::handleError('The file couldn\'t be opened.', 500);
-                return;
+                throw new \RuntimeException('The file couldn\'t be opened.');
             }
         } else {
             // Handle error if the value of $overwrite is invalid
-            ErrorHandler::handleError('The overwrite parameter only accepts 0 or 1.', 500);
-            return;
+            throw new \InvalidArgumentException('The overwrite parameter only accepts 0 or 1.');
         }
 
         // Close the file
@@ -893,10 +836,9 @@ class FileTool
      * @param string      $file The name of the file to be sanitized.
      * @param string|null $type Optional type for transforming the file name.
      *
-     * @return string|null       The name of the sanitized file, or null in case of
-     *                           error.
+     * @return string            The sanitized file name.
      */
-    private static function sanitizeFile(string $file, string $type = null): string|null
+    private static function sanitizeFile(string $file, string $type = null): string
     {
         // Remove any characters that are not letters, numbers, spaces, or periods
         $file = preg_replace('/[^\p{L}\p{N}\s.]/u', '', $file);
@@ -922,9 +864,8 @@ class FileTool
                 return FileTool::toNone($file);
             break;
             default:
-                // If an invalid type is provided, handle the error and return null
-                ErrorHandler::handleError('The following pattern does not exist.', 500);
-                return null;
+                // If an invalid type is provided, throw an exception
+                throw new \InvalidArgumentException('The following pattern does not exist.');
             break;
         }
     }
