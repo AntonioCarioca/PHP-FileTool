@@ -28,9 +28,9 @@ class FileTool
      * @param int|integer $permisson Directory permissions to be applied.
      *                               The default is 0777.
      *
-     * @return void                   There is no explicit feedback.
+     * @return string                 Returns the created directory path.
      */
-    public static function createDir(string $dir, int $permisson = 0777): void
+    public static function createDir(string $dir, int $permisson = 0777): string
     {
         // Sanitize the directory path
         $dir = FileTool::sanitizeDirectory($dir);
@@ -43,6 +43,8 @@ class FileTool
 
         // Create the directory with the specified permissions
         mkdir($dir, $permisson, true);
+
+        return $dir;
     }
 
     /**
@@ -56,9 +58,9 @@ class FileTool
      * @param string      $file The name of the file to be created.
      * @param string|null $type Optional type of file to create. Default is null.
      *
-     * @return void              There is no explicit feedback.
+     * @return string            Returns the full path of the created file.
      */
-    public static function createFile(string $dir, string $file, string $type = null): void
+    public static function createFile(string $dir, string $file, string $type = null): string
     {
         // Sanitize the directory and file names
         $dir = FileTool::sanitizeDirectory($dir);
@@ -88,12 +90,15 @@ class FileTool
         }
 
         // Attempt to create the file
-        if (!fopen($fileFull, 'w')) {
+        if (!$newFile = fopen($fileFull, 'w')) {
             throw new \RuntimeException('The file could not be created');
         }
+        fclose($newFile);
 
         // Clear stat cache
         clearstatcache();
+
+        return $fileFull;
     }
 
     /**
@@ -109,9 +114,9 @@ class FileTool
      *                              is null.
      * @param int         $quantity The number of files to be created.
      *
-     * @return void                There is no explicit feedback.
+     * @return array               Returns a list with all created file paths.
      */
-    public static function createMany(string $dir, string $file, string $type = null, int $quantity): void
+    public static function createMany(string $dir, string $file, string $type = null, int $quantity): array
     {
         // Sanitize the directory and file names
         $dir = FileTool::sanitizeDirectory($dir);
@@ -148,18 +153,24 @@ class FileTool
             throw new \RuntimeException('The file already exists.');
         }
 
+        $createdFiles = [];
+
         // Create the specified number of files with sequential names
         for ($i = 1; $i <= $quantity; $i++) {
             // Attempt to create the file
-            if (!fopen($fileFull, 'w')) {
+            if (!$newFile = fopen($fileFull, 'w')) {
                 throw new \RuntimeException('The file could not be created');
             }
+            fclose($newFile);
+            $createdFiles[] = $fileFull;
             // Generate the next file name for the next iteration
             $fileFull = $dir . '/' . $fileName . '_' . $i . '.' . $fileExtension;
         }
 
         // Clear stat cache
         clearstatcache();
+
+        return $createdFiles;
     }
 
     /**
@@ -173,9 +184,9 @@ class FileTool
      * @param string $origin  The path of the file to be copied.
      * @param string $destiny The destination path where the file will be copied.
      *
-     * @return void            There is no explicit return.
+     * @return string          Returns the path of the copied file.
      */
-    public static function copy(string $origin, string $destiny): void
+    public static function copy(string $origin, string $destiny): string
     {
         // Check if the origin directory and file exist
         if (!is_dir(dirname($origin)) || !file_exists($origin)) {
@@ -226,10 +237,16 @@ class FileTool
 
         // Copy the file to the destination with a unique name if necessary
         if (isset($newFile)) {
-            copy($origin, $destiny . '/' . $newFile);
+            $destinationFile = $destiny . '/' . $newFile;
         } else {
-            copy($origin, $destiny . '/' . basename($origin));
+            $destinationFile = $destiny . '/' . basename($origin);
         }
+
+        if (!copy($origin, $destinationFile)) {
+            throw new \RuntimeException('The file could not be copied.');
+        }
+
+        return $destinationFile;
     }
 
     /**
@@ -244,9 +261,9 @@ class FileTool
      * @param string $destiny The destination directory where the files will be
      *                        copied.
      *
-     * @return void          There is no explicit return.
+     * @return array         Returns a list with all copied file paths.
      */
-    public static function copyAll(string $origin, string $destiny): void
+    public static function copyAll(string $origin, string $destiny): array
     {
         // Check if the origin directory exists
         if (!is_dir($origin)) {
@@ -271,6 +288,8 @@ class FileTool
         // Initialize counter for files that couldn't be copied
         $countFiles = 0;
 
+        $copiedFiles = [];
+
         // Iterate through each file in the origin directory
         foreach ($files as $file) {
             // Check if the item is a file
@@ -278,7 +297,11 @@ class FileTool
                 // Check if the file is readable and doesn't exist in the destination
                 if (is_readable($origin . '/' . $file) && !file_exists($destiny . '/' . $file)) {
                     // Copy the file to the destination directory
-                    copy($origin . '/' . $file, $destiny . '/' . $file);
+                    if (!copy($origin . '/' . $file, $destiny . '/' . $file)) {
+                        $countFiles++;
+                        continue;
+                    }
+                    $copiedFiles[] = $destiny . '/' . $file;
                 } else {
                     // Increment counter if the file couldn't be copied
                     $countFiles++;
@@ -290,6 +313,8 @@ class FileTool
         if ($countFiles > 0) {
             throw new \RuntimeException("$countFiles files cannot be copied.");
         }
+
+        return $copiedFiles;
     }
 
     /**
@@ -302,9 +327,9 @@ class FileTool
      * @param string $fileOrigin  The path of the source file.
      * @param string $fileDestiny The path of the destination file.
      *
-     * @return void              There is no explicit return.
+     * @return string            Returns the destination file path.
      */
-    public static function copyContent(string $fileOrigin, string $fileDestiny): void
+    public static function copyContent(string $fileOrigin, string $fileDestiny): string
     {
         // Sanitize fileOrigin paths
         $fileOrigin = FileTool::sanitizeDirectory(dirname($fileOrigin)) . '/' .
@@ -358,6 +383,8 @@ class FileTool
         fwrite($file, $content);
         // Close the destination file
         fclose($file);
+
+        return $fileDestiny;
     }
 
     /**
@@ -368,9 +395,9 @@ class FileTool
      *
      * @param string $dir The path of the directory to purge.
      *
-     * @return void      No return value.
+     * @return bool      Returns true when purge is completed.
      */
-    public static function purge(string $dir): void
+    public static function purge(string $dir): bool
     {
         // Sanitize the directory path
         $dir = FileTool::sanitizeDirectory($dir);
@@ -408,6 +435,8 @@ class FileTool
         }
         // Remove the directory itself after all its contents are deleted
         rmdir($dir);
+
+        return true;
     }
 
     /**
@@ -465,9 +494,9 @@ class FileTool
      *
      * @param string $dir The path of the directory to be removed.
      *
-     * @return void      There is no explicit feedback.
+     * @return bool      Returns true when the directory is removed.
      */
-    public static function removeDir(string $dir): void
+    public static function removeDir(string $dir): bool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -491,6 +520,8 @@ class FileTool
 
         // Remove the directory
         rmdir($dir);
+
+        return true;
     }
 
     /**
@@ -500,9 +531,9 @@ class FileTool
      *
      * @param string $path The path of the file to be removed.
      *
-     * @return void       There is no explicit feedback.
+     * @return bool       Returns true when the file is removed.
      */
-    public static function removeFile(string $path): void
+    public static function removeFile(string $path): bool
     {
         // Check if the directory of the file exists
         if (!is_dir(dirname($path))) {
@@ -536,6 +567,8 @@ class FileTool
 
         // Remove the file
         unlink($path);
+
+        return true;
     }
 
     /**
@@ -546,9 +579,9 @@ class FileTool
      *
      * @param string $dir The path of the directory to be removed.
      *
-     * @return void      There is no explicit feedback.
+     * @return bool      Returns true when all files and directory are removed.
      */
-    public static function removeAll(string $dir): void
+    public static function removeAll(string $dir): bool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -592,6 +625,8 @@ class FileTool
 
         // Remove the directory
         FileTool::removeDir($dir);
+
+        return true;
     }
 
     /**
@@ -603,9 +638,9 @@ class FileTool
      * @param string      $newPath The new path or name for the directory or file.
      * @param string|null $type    Optional type of file to create. Default is null.
      *
-     * @return void               There is no explicit return.
+     * @return string             Returns the new final path.
      */
-    public static function rename(string $oldPath, string $newPath, string $type = null): void
+    public static function rename(string $oldPath, string $newPath, string $type = null): string
     {
         // Check if the old path exists
         if (!is_dir($oldPath) && !file_exists($oldPath)) {
@@ -639,6 +674,8 @@ class FileTool
         if (!rename($oldPath, $newPath)) {
             throw new \RuntimeException('It couldn\'t be renamed.');
         }
+
+        return $newPath;
     }
 
     /**
@@ -655,9 +692,9 @@ class FileTool
      * @param string|null $type     Optional type of the files to be renamed.
      *                              Default is null.
      *
-     * @return void                There is no explicit return.
+     * @return array               Returns a list with all new file paths.
      */
-    public static function renameAll(string $dir, string $fileName, string $type = null): void
+    public static function renameAll(string $dir, string $fileName, string $type = null): array
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -683,6 +720,7 @@ class FileTool
 
         $countFiles = 0;
         $version = 1;
+        $renamedFiles = [];
 
         // Open the directory handle
         if ($dh = opendir($dir)) {
@@ -697,7 +735,11 @@ class FileTool
                         $countFiles++;
                     } else {
                         // Rename the file
-                        rename($dir . '/' . $file, $dir . '/' . $newFile);
+                        if (!rename($dir . '/' . $file, $dir . '/' . $newFile)) {
+                            $countFiles++;
+                        } else {
+                            $renamedFiles[] = $dir . '/' . $newFile;
+                        }
                     }
                     // Increment the version number for the next file
                     $version++;
@@ -710,6 +752,8 @@ class FileTool
         if ($countFiles > 0) {
             throw new \RuntimeException("$countFiles files cannot be renamed.");
         }
+
+        return $renamedFiles;
     }
 
     /**
@@ -757,9 +801,9 @@ class FileTool
      * @param int|integer $overwrite Determines whether to overwrite the file's
      *                               content (1) or append to it (0). Default is 0.
      *
-     * @return void                 There is no explicit return value.
+     * @return int                  Returns number of written bytes.
      */
-    public static function write(string $dir, string $content, int $overwrite = 0): void
+    public static function write(string $dir, string $content, int $overwrite = 0): int
     {
         // Sanitize file path
         $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
@@ -780,7 +824,10 @@ class FileTool
         if ($overwrite === 0) {
             // Append content to the file
             if ($file = fopen($dir, 'a')) {
-                fwrite($file, $content);
+                $bytes = fwrite($file, $content);
+                if ($bytes === false) {
+                    throw new \RuntimeException('The content could not be written to the file.');
+                }
             } else {
                 // Handle error if the file couldn't be opened for appending
                 throw new \RuntimeException('The file couldn\'t be opened.');
@@ -788,7 +835,10 @@ class FileTool
         } elseif ($overwrite === 1) {
             // Overwrite content of the file
             if ($file = fopen($dir, 'w')) {
-                fwrite($file, $content);
+                $bytes = fwrite($file, $content);
+                if ($bytes === false) {
+                    throw new \RuntimeException('The content could not be written to the file.');
+                }
             } else {
                 // Handle error if the file couldn't be opened for writing
                 throw new \RuntimeException('The file couldn\'t be opened.');
@@ -800,6 +850,8 @@ class FileTool
 
         // Close the file
         fclose($file);
+
+        return $bytes;
     }
 
     /**
