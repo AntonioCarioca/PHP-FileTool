@@ -30,10 +30,10 @@ class FileTool
      *
      * @return string                 Returns the created directory path.
      */
-    public static function createDir(string $dir, int $permission = 0777): string
+    public static function createDirectory(string $dir, int $permission = 0777): string
     {
         // Sanitize the directory path
-        $dir = FileTool::sanitizeDirectory($dir);
+        $dir = FileTool::normalizeDirectoryPath($dir);
 
         // Check if the directory already exists
         if (is_dir($dir)) {
@@ -65,12 +65,12 @@ class FileTool
     public static function createFile(string $dir, string $file, ?string $type = null): string
     {
         // Sanitize the directory and file names
-        $dir = FileTool::sanitizeDirectory($dir);
-        $file = FileTool::sanitizeFile($file, $type);
+        $dir = FileTool::normalizeDirectoryPath($dir);
+        $file = FileTool::sanitizeFileName($file, $type);
 
         // Create the directory if it doesn't exist
         if (!is_dir($dir)) {
-            FileTool::createDir($dir, 0777);
+            FileTool::createDirectory($dir, 0777);
         }
 
         // Check if the directory is readable
@@ -118,11 +118,11 @@ class FileTool
      *
      * @return array               Returns a list with all created file paths.
      */
-    public static function createMany(string $dir, string $file, ?string $type = null, int $quantity): array
+    public static function createMultipleFiles(string $dir, string $file, ?string $type = null, int $quantity): array
     {
         // Sanitize the directory and file names
-        $dir = FileTool::sanitizeDirectory($dir);
-        $file = FileTool::sanitizeFile($file, $type);
+        $dir = FileTool::normalizeDirectoryPath($dir);
+        $file = FileTool::sanitizeFileName($file, $type);
 
         // Check if the quantity is valid
         if ($quantity <= 0) {
@@ -131,7 +131,7 @@ class FileTool
 
         // Create the directory if it doesn't exist
         if (!is_dir($dir)) {
-            FileTool::createDir($dir, 0777);
+            FileTool::createDirectory($dir, 0777);
         }
 
         // Check if the directory is readable
@@ -188,7 +188,7 @@ class FileTool
      *
      * @return string          Returns the path of the copied file.
      */
-    public static function copy(string $origin, string $destiny): string
+    public static function copyFile(string $origin, string $destiny): string
     {
         // Check if the origin file exists
         if (!is_file($origin)) {
@@ -201,11 +201,11 @@ class FileTool
         }
 
         // Sanitize the destination directory path
-        $destiny = FileTool::sanitizeDirectory($destiny);
+        $destiny = FileTool::normalizeDirectoryPath($destiny);
 
         // Create the destination directory if it doesn't exist
         if (!is_dir($destiny)) {
-            FileTool::createDir($destiny, 0777);
+            FileTool::createDirectory($destiny, 0777);
         }
 
         // Check if the destination directory can be written
@@ -254,7 +254,7 @@ class FileTool
      *
      * @return array         Returns a list with all copied file paths.
      */
-    public static function copyAll(string $origin, string $destiny): array
+    public static function copyAllFiles(string $origin, string $destiny): array
     {
         // Check if the origin directory exists
         if (!is_dir($origin)) {
@@ -267,11 +267,11 @@ class FileTool
         }
 
         // Sanitize the destination directory path
-        $destiny = FileTool::sanitizeDirectory($destiny);
+        $destiny = FileTool::normalizeDirectoryPath($destiny);
 
         // Create the destination directory if it doesn't exist
         if (!is_dir($destiny)) {
-            FileTool::createDir($destiny, 0777);
+            FileTool::createDirectory($destiny, 0777);
         }
 
         // Check if the destination directory can be written
@@ -325,15 +325,15 @@ class FileTool
      *
      * @return string            Returns the destination file path.
      */
-    public static function copyContent(string $fileOrigin, string $fileDestiny): string
+    public static function copyFileContent(string $fileOrigin, string $fileDestiny): string
     {
         // Sanitize fileOrigin paths
-        $fileOrigin = FileTool::sanitizeDirectory(dirname($fileOrigin)) . '/' .
-                      FileTool::sanitizeFile(basename($fileOrigin));
+        $fileOrigin = FileTool::normalizeDirectoryPath(dirname($fileOrigin)) . '/' .
+                      FileTool::sanitizeFileName(basename($fileOrigin));
 
         // Sanitize fileDestiny paths
-        $fileDestiny = FileTool::sanitizeDirectory(dirname($fileDestiny)) . '/' .
-                       FileTool::sanitizeFile(basename($fileDestiny));
+        $fileDestiny = FileTool::normalizeDirectoryPath(dirname($fileDestiny)) . '/' .
+                       FileTool::sanitizeFileName(basename($fileDestiny));
 
         // Check if the source file and its directory exist
         if (!file_exists($fileOrigin) || !is_dir(dirname($fileOrigin))) {
@@ -347,7 +347,7 @@ class FileTool
 
         // Create the directory for the destination file if it doesn't exist
         if (!is_dir(dirname($fileDestiny))) {
-            FileTool::createDir(dirname($fileDestiny));
+            FileTool::createDirectory(dirname($fileDestiny));
         }
 
         // Create the destination file if it doesn't exist
@@ -393,10 +393,10 @@ class FileTool
      *
      * @return bool      Returns true when purge is completed.
      */
-    public static function purge(string $dir): bool
+    public static function deleteDirectoryRecursive(string $dir): bool
     {
         // Sanitize the directory path
-        $dir = FileTool::sanitizeDirectory($dir);
+        $dir = FileTool::normalizeDirectoryPath($dir);
 
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -419,7 +419,7 @@ class FileTool
             $path = $dir . DIRECTORY_SEPARATOR . $item;
             // Recursively purge subdirectories
             if (is_dir($path)) {
-                self::purge($path);
+                self::deleteDirectoryRecursive($path);
             } else {
                 // Check if the file is writable before deletion
                 if (!is_writable($path)) {
@@ -444,11 +444,11 @@ class FileTool
      *
      * @return string      The content of the file as a string.
      */
-    public static function read(string $dir): string
+    public static function readFile(string $dir): string
     {
         // Sanitize file path
-        $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
-               FileTool::sanitizeFile(basename($dir));
+        $dir = FileTool::normalizeDirectoryPath(dirname($dir)) . '/' .
+               FileTool::sanitizeFileName(basename($dir));
 
         // Check if the directory exists
         if (!is_dir(dirname($dir))) {
@@ -490,7 +490,7 @@ class FileTool
      *
      * @return bool      Returns true when the directory is removed.
      */
-    public static function removeDir(string $dir): bool
+    public static function deleteDirectory(string $dir): bool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -527,7 +527,7 @@ class FileTool
      *
      * @return bool       Returns true when the file is removed.
      */
-    public static function removeFile(string $path): bool
+    public static function deleteFile(string $path): bool
     {
         // Check if the directory of the file exists
         if (!is_dir(dirname($path))) {
@@ -575,7 +575,7 @@ class FileTool
      *
      * @return bool      Returns true when all files and directory are removed.
      */
-    public static function removeAll(string $dir): bool
+    public static function deleteAllFiles(string $dir): bool
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -618,7 +618,7 @@ class FileTool
         }
 
         // Remove the directory
-        FileTool::removeDir($dir);
+        FileTool::deleteDirectory($dir);
 
         return true;
     }
@@ -634,7 +634,7 @@ class FileTool
      *
      * @return string             Returns the new final path.
      */
-    public static function rename(string $oldPath, string $newPath, ?string $type = null): string
+    public static function renamePath(string $oldPath, string $newPath, ?string $type = null): string
     {
         // Check if the old path exists
         if (!is_dir($oldPath) && !file_exists($oldPath)) {
@@ -653,14 +653,14 @@ class FileTool
 
         // Check if the new path has an extension; if not, sanitize it as a directory
         if (!pathinfo($newPath, PATHINFO_EXTENSION)) {
-            $newPath = FileTool::sanitizeDirectory($newPath);
+            $newPath = FileTool::normalizeDirectoryPath($newPath);
         } else {
             // If the new path has an extension, sanitize it as a file name
             $file = pathinfo($newPath, PATHINFO_FILENAME) . '.' .
             pathinfo($newPath, PATHINFO_EXTENSION);
 
-            $file = FileTool::sanitizeFile($file, $type);
-            $newPath = FileTool::sanitizeDirectory(dirname($newPath));
+            $file = FileTool::sanitizeFileName($file, $type);
+            $newPath = FileTool::normalizeDirectoryPath(dirname($newPath));
 
             $newPath = $newPath . '/' . $file;
         }
@@ -688,7 +688,7 @@ class FileTool
      *
      * @return array               Returns a list with all new file paths.
      */
-    public static function renameAll(string $dir, string $fileName, ?string $type = null): array
+    public static function renameAllFiles(string $dir, string $fileName, ?string $type = null): array
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -706,7 +706,7 @@ class FileTool
         }
 
         // Sanitize the new base file name
-        $fileName = FileTool::sanitizeFile($fileName, $type);
+        $fileName = FileTool::sanitizeFileName($fileName, $type);
 
         // Extract the file extension and file name without extension
         $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -760,10 +760,10 @@ class FileTool
      *
      * @return array           An array of file names.
      */
-    public static function show(string $dir): array
+    public static function listFiles(string $dir): array
     {
         // Sanitize directory path
-        $dir = FileTool::sanitizeDirectory($dir);
+        $dir = FileTool::normalizeDirectoryPath($dir);
 
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -797,11 +797,11 @@ class FileTool
      *
      * @return int                  Returns number of written bytes.
      */
-    public static function write(string $dir, string $content, int $overwrite = 0): int
+    public static function writeFile(string $dir, string $content, int $overwrite = 0): int
     {
         // Sanitize file path
-        $dir = FileTool::sanitizeDirectory(dirname($dir)) . '/' .
-               FileTool::sanitizeFile(basename($dir));
+        $dir = FileTool::normalizeDirectoryPath(dirname($dir)) . '/' .
+               FileTool::sanitizeFileName(basename($dir));
 
         // Check if the file and its directory exist
         if (!is_dir(dirname($dir)) || !file_exists($dir)) {
@@ -857,7 +857,7 @@ class FileTool
      *
      * @return string      The path of the sanitized directory.
      */
-    private static function sanitizeDirectory(string $dir): string
+    private static function normalizeDirectoryPath(string $dir): string
     {
         $dir = trim($dir);
 
@@ -916,7 +916,7 @@ class FileTool
      *
      * @return string            The sanitized file name.
      */
-    private static function sanitizeFile(string $file, ?string $type = null): string
+    private static function sanitizeFileName(string $file, ?string $type = null): string
     {
         // Remove any characters that are not letters, numbers, spaces, or periods
         $file = preg_replace('/[^\p{L}\p{N}\s.]/u', '', $file);
@@ -1078,4 +1078,135 @@ class FileTool
         // Return the uppercase file name
         return $file;
     }
+
+
+
+    /**
+     * Backward-compatible alias for writeFile().
+     */
+    public static function write(string $dir, string $content, int $overwrite = 0): int
+    {
+        return self::writeFile($dir, $content, $overwrite);
+    }
+
+    /**
+     * Backward-compatible alias for createDirectory().
+     */
+    public static function createDir(string $dir, int $permission = 0777): string
+    {
+        return self::createDirectory($dir, $permission);
+    }
+
+    /**
+     * Backward-compatible alias for createMultipleFiles().
+     */
+    public static function createMany(string $dir, string $file, ?string $type = null, int $quantity): array
+    {
+        return self::createMultipleFiles($dir, $file, $type, $quantity);
+    }
+
+    /**
+     * Backward-compatible alias for copyFile().
+     */
+    public static function copy(string $origin, string $destiny): string
+    {
+        return self::copyFile($origin, $destiny);
+    }
+
+    /**
+     * Backward-compatible alias for copyAllFiles().
+     */
+    public static function copyAll(string $origin, string $destiny): array
+    {
+        return self::copyAllFiles($origin, $destiny);
+    }
+
+    /**
+     * Backward-compatible alias for copyFileContent().
+     */
+    public static function copyContent(string $fileOrigin, string $fileDestiny): string
+    {
+        return self::copyFileContent($fileOrigin, $fileDestiny);
+    }
+
+    /**
+     * Backward-compatible alias for deleteDirectoryRecursive().
+     */
+    public static function purge(string $dir): bool
+    {
+        return self::deleteDirectoryRecursive($dir);
+    }
+
+    /**
+     * Backward-compatible alias for readFile().
+     */
+    public static function read(string $dir): string
+    {
+        return self::readFile($dir);
+    }
+
+    /**
+     * Backward-compatible alias for deleteDirectory().
+     */
+    public static function removeDir(string $dir): bool
+    {
+        return self::deleteDirectory($dir);
+    }
+
+    /**
+     * Backward-compatible alias for deleteFile().
+     */
+    public static function removeFile(string $path): bool
+    {
+        return self::deleteFile($path);
+    }
+
+    /**
+     * Alternative alias for deleteFile().
+     */
+    public static function remove(string $path): bool
+    {
+        return self::deleteFile($path);
+    }
+
+    /**
+     * Backward-compatible alias for deleteAllFiles().
+     */
+    public static function removeAll(string $dir): bool
+    {
+        return self::deleteAllFiles($dir);
+    }
+
+    /**
+     * Backward-compatible alias for renamePath().
+     */
+    public static function rename(string $oldPath, string $newPath, ?string $type = null): string
+    {
+        return self::renamePath($oldPath, $newPath, $type);
+    }
+
+    /**
+     * More explicit alias when renaming a file.
+     */
+    public static function renameFile(string $oldPath, string $newPath, ?string $type = null): string
+    {
+        return self::renamePath($oldPath, $newPath, $type);
+    }
+
+    /**
+     * Backward-compatible alias for renameAllFiles().
+     */
+    public static function renameAll(string $dir, string $fileName, ?string $type = null): array
+    {
+        return self::renameAllFiles($dir, $fileName, $type);
+    }
+
+    /**
+     * Backward-compatible alias for listFiles().
+     */
+    public static function show(string $dir): array
+    {
+        return self::listFiles($dir);
+    }
+
 }
