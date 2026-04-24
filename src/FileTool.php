@@ -25,12 +25,12 @@ class FileTool
      * Creates a directory with the specified path, if it doesn't already exist.
      *
      * @param string      $dir       The path of the directory to be created.
-     * @param int|integer $permisson Directory permissions to be applied.
+     * @param int|integer $permission Directory permissions to be applied.
      *                               The default is 0777.
      *
      * @return string                 Returns the created directory path.
      */
-    public static function createDir(string $dir, int $permisson = 0777): string
+    public static function createDir(string $dir, int $permission = 0777): string
     {
         // Sanitize the directory path
         $dir = FileTool::sanitizeDirectory($dir);
@@ -42,7 +42,9 @@ class FileTool
         }
 
         // Create the directory with the specified permissions
-        mkdir($dir, $permisson, true);
+        if (!mkdir($dir, $permission, true)) {
+            throw new \RuntimeException('The directory could not be created.');
+        }
 
         return $dir;
     }
@@ -60,7 +62,7 @@ class FileTool
      *
      * @return string            Returns the full path of the created file.
      */
-    public static function createFile(string $dir, string $file, string $type = null): string
+    public static function createFile(string $dir, string $file, ?string $type = null): string
     {
         // Sanitize the directory and file names
         $dir = FileTool::sanitizeDirectory($dir);
@@ -116,7 +118,7 @@ class FileTool
      *
      * @return array               Returns a list with all created file paths.
      */
-    public static function createMany(string $dir, string $file, string $type = null, int $quantity): array
+    public static function createMany(string $dir, string $file, ?string $type = null, int $quantity): array
     {
         // Sanitize the directory and file names
         $dir = FileTool::sanitizeDirectory($dir);
@@ -188,19 +190,14 @@ class FileTool
      */
     public static function copy(string $origin, string $destiny): string
     {
-        // Check if the origin directory and file exist
-        if (!is_dir(dirname($origin)) || !file_exists($origin)) {
-           throw new \RuntimeException('The directory and/or file doesn\'t exist.');
+        // Check if the origin file exists
+        if (!is_file($origin)) {
+            throw new \RuntimeException('The origin file does not exist.');
         }
 
-        // Check if the origin directory is writable
-        if (!is_writable(dirname($origin))) {
-            throw new \RuntimeException('Cannot write to directory.');
-        }
-
-        // Check if the origin file is readable
+        // Check if the origin file can be read
         if (!is_readable($origin)) {
-            throw new \RuntimeException('Cannot access the file.');
+            throw new \RuntimeException('Cannot read the origin file.');
         }
 
         // Sanitize the destination directory path
@@ -211,35 +208,28 @@ class FileTool
             FileTool::createDir($destiny, 0777);
         }
 
-        // Initialize counter for generating unique file names
-        $i = 1;
+        // Check if the destination directory can be written
+        if (!is_writable($destiny)) {
+            throw new \RuntimeException('Cannot write to destination directory.');
+        }
+
         // Extract file name and extension
         $fileName = pathinfo(basename($origin), PATHINFO_FILENAME);
         $fileExtension = pathinfo(basename($origin), PATHINFO_EXTENSION);
+        $destinationFile = $destiny . '/' . basename($origin);
 
-        // Open the destination directory
-        if ($dir = opendir($destiny)) {
-            // Iterate through files in the destination directory
-            while (($file = readdir($dir)) !== false) {
-                // Exclude current directory (.) and parent directory (..)
-                if ($file != '.' && $file != '..') {
-                    // Check if a file with the same name already exists
-                    if (file_exists($destiny . '/' . basename($origin))) {
-                        // Generate a unique file name
-                        $newFile = $fileName . '(' . $i . ')' . '.' . $fileExtension;
-                        $i++;
-                    }
-                }
+        // Generate a unique file name when the destination file already exists
+        $i = 1;
+        while (file_exists($destinationFile)) {
+            $suffix = '(' . $i . ')';
+
+            if ($fileExtension !== '') {
+                $destinationFile = $destiny . '/' . $fileName . $suffix . '.' . $fileExtension;
+            } else {
+                $destinationFile = $destiny . '/' . $fileName . $suffix;
             }
-            // Close the destination directory
-            closedir($dir);
-        }
 
-        // Copy the file to the destination with a unique name if necessary
-        if (isset($newFile)) {
-            $destinationFile = $destiny . '/' . $newFile;
-        } else {
-            $destinationFile = $destiny . '/' . basename($origin);
+            $i++;
         }
 
         if (!copy($origin, $destinationFile)) {
@@ -248,6 +238,7 @@ class FileTool
 
         return $destinationFile;
     }
+
 
     /**
      * Copies all files from one directory to another.
@@ -270,9 +261,9 @@ class FileTool
             throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
-        // Check if the origin directory is writable
-        if (!is_writable($origin)) {
-           throw new \RuntimeException('Cannot write to directory.');
+        // Check if the origin directory is readable
+        if (!is_readable($origin)) {
+            throw new \RuntimeException('Cannot access the origin directory.');
         }
 
         // Sanitize the destination directory path
@@ -281,6 +272,11 @@ class FileTool
         // Create the destination directory if it doesn't exist
         if (!is_dir($destiny)) {
             FileTool::createDir($destiny, 0777);
+        }
+
+        // Check if the destination directory can be written
+        if (!is_writable($destiny)) {
+            throw new \RuntimeException('Cannot write to destination directory.');
         }
 
         // Get list of files in the origin directory
@@ -459,9 +455,9 @@ class FileTool
             throw new \RuntimeException('The directory doesn\'t exist.');
         }
 
-        // Check if the directory is writable
-        if (!is_writable(dirname($dir))) {
-            throw new \RuntimeException('Cannot write to directory');
+        // Check if the directory is readable
+        if (!is_readable(dirname($dir))) {
+            throw new \RuntimeException('Cannot access the directory.');
         }
 
         // Check if the file exists
@@ -474,18 +470,16 @@ class FileTool
             throw new \RuntimeException('The file doesn\'t have read permission.');
         }
 
-        // Open the file for reading
-        if (!$file = fopen($dir, 'r')) {
-            throw new \RuntimeException('The file couldn\'t be opened.');
+        // Read the content of the file
+        $content = file_get_contents($dir);
+
+        if ($content === false) {
+            throw new \RuntimeException('The file could not be read.');
         }
 
-        // Read the content of the file
-        $content = fread($file, filesize($dir));
-        // Close the file
-        fclose($file);
-        // Return the content of the file
         return $content;
     }
+
 
     /**
      * Removes an empty directory.
@@ -640,7 +634,7 @@ class FileTool
      *
      * @return string             Returns the new final path.
      */
-    public static function rename(string $oldPath, string $newPath, string $type = null): string
+    public static function rename(string $oldPath, string $newPath, ?string $type = null): string
     {
         // Check if the old path exists
         if (!is_dir($oldPath) && !file_exists($oldPath)) {
@@ -694,7 +688,7 @@ class FileTool
      *
      * @return array               Returns a list with all new file paths.
      */
-    public static function renameAll(string $dir, string $fileName, string $type = null): array
+    public static function renameAll(string $dir, string $fileName, ?string $type = null): array
     {
         // Check if the directory exists
         if (!is_dir($dir)) {
@@ -865,19 +859,51 @@ class FileTool
      */
     private static function sanitizeDirectory(string $dir): string
     {
-        // Remove special characters from the directory path
-        $dir = preg_replace('/[^a-zA-Z0-9\.\/]+/', '', $dir);
-        // Normalize directory separators (e.g., // to /)
-        $dir = preg_replace('/\/+/', '/', $dir);
-        // Replace multiple dots with a single dot
-        $dir = preg_replace('/\.+/', '..', $dir);
-        // Remove trailing dots at the end of the path
-        $dir = preg_replace('/\...$/', '', $dir);
-        // Remove trailing slash at the end of the path
-        $dir = preg_replace('/\/$/', '', $dir);
-        // Return the sanitized directory path
-        return $dir;
+        $dir = trim($dir);
+
+        if ($dir === '') {
+            throw new \InvalidArgumentException('The directory path cannot be empty.');
+        }
+
+        // Normalize directory separators and remove repeated slashes.
+        $dir = str_replace('\\', '/', $dir);
+        $dir = preg_replace('#/+#', '/', $dir);
+
+        if ($dir === null) {
+            throw new \RuntimeException('The directory path could not be sanitized.');
+        }
+
+        $isAbsolute = str_starts_with($dir, '/');
+        $parts = explode('/', trim($dir, '/'));
+        $safeParts = [];
+
+        foreach ($parts as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+
+            // Block directory traversal attempts such as ../storage.
+            if ($part === '..') {
+                throw new \InvalidArgumentException('Directory traversal is not allowed.');
+            }
+
+            $part = preg_replace('/[^\p{L}\p{N}._ -]/u', '', $part);
+            $part = trim($part);
+
+            if ($part !== '') {
+                $safeParts[] = $part;
+            }
+        }
+
+        $dir = implode('/', $safeParts);
+
+        if ($dir === '') {
+            throw new \InvalidArgumentException('The directory path cannot be empty.');
+        }
+
+        return $isAbsolute ? '/' . $dir : $dir;
     }
+
 
     /**
      * Method for sanitizing a file name.
@@ -890,13 +916,13 @@ class FileTool
      *
      * @return string            The sanitized file name.
      */
-    private static function sanitizeFile(string $file, string $type = null): string
+    private static function sanitizeFile(string $file, ?string $type = null): string
     {
         // Remove any characters that are not letters, numbers, spaces, or periods
         $file = preg_replace('/[^\p{L}\p{N}\s.]/u', '', $file);
 
         // Apply additional sanitization based on the specified type
-        switch (strtolower($type)) {
+        switch (strtolower($type ?? '')) {
             case 'camel':
                 return FileTool::toCamel($file);
             break;
