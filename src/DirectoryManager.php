@@ -1,6 +1,11 @@
 <?php
 
 namespace PHPFileTool\FileTool;
+use PHPFileTool\FileTool\Exceptions\DirectoryAlreadyExistsException;
+use PHPFileTool\FileTool\Exceptions\DirectoryNotFoundException;
+use PHPFileTool\FileTool\Exceptions\OperationFailedException;
+use PHPFileTool\FileTool\Exceptions\PermissionDeniedException;
+
 
 class DirectoryManager
 {
@@ -9,11 +14,11 @@ class DirectoryManager
         $dir = PathHelper::normalizeDirectoryPath($dir);
 
         if (is_dir($dir)) {
-            throw new \RuntimeException('The directory already exists');
+            throw new DirectoryAlreadyExistsException('Directory already exists.');
         }
 
         if (!mkdir($dir, $permission, true)) {
-            throw new \RuntimeException('The directory could not be created.');
+            throw new OperationFailedException('Failed to create directory.');
         }
 
         return $dir;
@@ -22,19 +27,19 @@ class DirectoryManager
     public static function deleteDirectory(string $dir): bool
     {
         if (!is_dir($dir)) {
-            throw new \RuntimeException('The directory doesn\'t exist.');
+            throw new DirectoryNotFoundException('Directory was not found.');
         }
 
         if (!is_readable(dirname($dir))) {
-            throw new \RuntimeException('Cannot access the directory.');
+            throw new PermissionDeniedException('Directory is not readable.');
         }
 
         if (!is_writable(dirname($dir))) {
-            throw new \RuntimeException('Cannot write to directory.');
+            throw new PermissionDeniedException('Directory is not writable.');
         }
 
         if (count(scandir($dir)) !== 2) {
-            throw new \RuntimeException('The directory is not empty.');
+            throw new OperationFailedException('Directory is not empty.');
         }
 
         rmdir($dir);
@@ -47,11 +52,11 @@ class DirectoryManager
         $dir = PathHelper::normalizeDirectoryPath($dir);
 
         if (!is_dir($dir)) {
-            throw new \RuntimeException('The directory doesn\'t exist.');
+            throw new DirectoryNotFoundException('Directory was not found.');
         }
 
         if (!is_writable($dir)) {
-            throw new \RuntimeException('The directory doesn\'t have write permission.');
+            throw new PermissionDeniedException('Directory is not writable.');
         }
 
         $items = array_diff(scandir($dir), ['.', '..']);
@@ -65,7 +70,7 @@ class DirectoryManager
             }
 
             if (!is_writable($path)) {
-                throw new \RuntimeException('There are files that cannot be deleted.');
+                throw new PermissionDeniedException('One or more files cannot be deleted because they are not writable.');
             }
 
             unlink($path);
@@ -79,15 +84,15 @@ class DirectoryManager
     public static function deleteAllFiles(string $dir): bool
     {
         if (!is_dir($dir)) {
-            throw new \RuntimeException('The directory doesn\'t exist.');
+            throw new DirectoryNotFoundException('Directory was not found.');
         }
 
         if (!is_readable(dirname($dir))) {
-            throw new \RuntimeException('Cannot access the directory.');
+            throw new PermissionDeniedException('Directory is not readable.');
         }
 
         if (!is_writable(dirname($dir))) {
-            throw new \RuntimeException('Cannot write to directory.');
+            throw new PermissionDeniedException('Directory is not writable.');
         }
 
         $files = scandir($dir);
@@ -107,7 +112,7 @@ class DirectoryManager
         }
 
         if ($countFiles > 0) {
-            throw new \RuntimeException("$countFiles files could not be deleted.");
+            throw new OperationFailedException("{$countFiles} file(s) could not be deleted.");
         }
 
         self::deleteDirectory($dir);
@@ -120,11 +125,11 @@ class DirectoryManager
         $dir = PathHelper::normalizeDirectoryPath($dir);
 
         if (!is_dir($dir)) {
-            throw new \RuntimeException('The directory doesn\'t exist.');
+            throw new DirectoryNotFoundException('Directory was not found.');
         }
 
         if (!is_readable($dir)) {
-            throw new \RuntimeException('Cannot access the directory');
+            throw new PermissionDeniedException('Directory is not readable.');
         }
 
         return array_values(array_diff(scandir($dir), ['..', '.']));

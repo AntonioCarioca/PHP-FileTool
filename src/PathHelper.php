@@ -1,6 +1,10 @@
 <?php
 
 namespace PHPFileTool\FileTool;
+use PHPFileTool\FileTool\Exceptions\InvalidOptionException;
+use PHPFileTool\FileTool\Exceptions\InvalidPathException;
+use PHPFileTool\FileTool\Exceptions\OperationFailedException;
+
 
 class PathHelper
 {
@@ -9,14 +13,14 @@ class PathHelper
         $dir = trim($dir);
 
         if ($dir === '') {
-            throw new \InvalidArgumentException('The directory path cannot be empty.');
+            throw new InvalidPathException('Directory path cannot be empty.');
         }
 
         $dir = str_replace('\\', '/', $dir);
         $dir = preg_replace('#/+#', '/', $dir);
 
         if ($dir === null) {
-            throw new \RuntimeException('The directory path could not be sanitized.');
+            throw new OperationFailedException('Failed to normalize directory path.');
         }
 
         $isAbsolute = str_starts_with($dir, '/');
@@ -29,7 +33,7 @@ class PathHelper
             }
 
             if ($part === '..') {
-                throw new \InvalidArgumentException('Directory traversal is not allowed.');
+                throw new InvalidPathException('Directory traversal is not allowed.');
             }
 
             $part = preg_replace('/[^\p{L}\p{N}._ -]/u', '', $part);
@@ -43,7 +47,7 @@ class PathHelper
         $dir = implode('/', $safeParts);
 
         if ($dir === '') {
-            throw new \InvalidArgumentException('The directory path cannot be empty.');
+            throw new InvalidPathException('Directory path cannot be empty.');
         }
 
         return $isAbsolute ? '/' . $dir : $dir;
@@ -54,7 +58,7 @@ class PathHelper
         $file = preg_replace('/[^\p{L}\p{N}\s.]/u', '', $file);
 
         if ($file === null) {
-            throw new \RuntimeException('The file name could not be sanitized.');
+            throw new OperationFailedException('Failed to sanitize file name.');
         }
 
         return match (strtolower($type ?? '')) {
@@ -64,7 +68,7 @@ class PathHelper
             'pascal' => self::toPascal($file),
             'upper' => self::toUpper($file),
             '' => self::toNone($file),
-            default => throw new \InvalidArgumentException('The following pattern does not exist.'),
+            default => throw new InvalidOptionException('Invalid file name format type.'),
         };
     }
 
