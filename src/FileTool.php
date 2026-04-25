@@ -39,7 +39,7 @@ class FileTool
 
     public static function createMultipleFiles(string $dir, string $file, int $quantity, ?string $type = null): array
     {
-        return FileManager::createMultipleFiles($dir, $file, $type, $quantity);
+        return FileManager::createMultipleFiles($dir, $file, $quantity, $type);
     }
 
     public static function copyFile(string $origin, string $destiny): string
@@ -94,7 +94,7 @@ class FileTool
 
     public static function createMany(string $dir, string $file, int $quantity, ?string $type = null): array
     {
-        return self::createMultipleFiles($dir, $file, $type, $quantity);
+        return self::createMultipleFiles($dir, $file, $quantity, $type);
     }
 
     public static function copy(string $origin, string $destiny): string

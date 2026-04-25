@@ -1,6 +1,7 @@
 <?php
 
 namespace PHPFileTool\FileTool;
+
 use PHPFileTool\FileTool\Exceptions\DirectoryNotFoundException;
 use PHPFileTool\FileTool\Exceptions\FileAlreadyExistsException;
 use PHPFileTool\FileTool\Exceptions\FileNotFoundException;
@@ -8,7 +9,6 @@ use PHPFileTool\FileTool\Exceptions\InvalidFileException;
 use PHPFileTool\FileTool\Exceptions\InvalidOptionException;
 use PHPFileTool\FileTool\Exceptions\OperationFailedException;
 use PHPFileTool\FileTool\Exceptions\PermissionDeniedException;
-
 
 class FileManager
 {
@@ -48,12 +48,11 @@ class FileManager
     }
 
     public static function createMultipleFiles(
-        string $dir, 
+        string $dir,
         string $file,
         int $quantity,
         ?string $type = null
-    ): array
-    {
+    ): array {
         $dir = PathHelper::normalizeDirectoryPath($dir);
         $file = PathHelper::sanitizeFileName($file, $type);
 

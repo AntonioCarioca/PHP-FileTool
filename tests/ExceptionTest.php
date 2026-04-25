@@ -1,7 +1,10 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
+namespace PHPFileTool\FileTool\Tests;
+
 use PHPFileTool\FileTool\FileManager;
+use PHPFileTool\FileTool\FileTool;
+use PHPUnit\Framework\TestCase;
 use PHPFileTool\FileTool\DirectoryManager;
 use PHPFileTool\FileTool\Exceptions\FileNotFoundException;
 use PHPFileTool\FileTool\Exceptions\DirectoryNotFoundException;

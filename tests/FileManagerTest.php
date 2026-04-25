@@ -1,7 +1,10 @@
 <?php
 
+namespace PHPFileTool\FileTool\Tests;
+
 use PHPUnit\Framework\TestCase;
 use PHPFileTool\FileTool\FileManager;
+use PHPFileTool\FileTool\FileTool;
 
 class FileManagerTest extends TestCase
 {

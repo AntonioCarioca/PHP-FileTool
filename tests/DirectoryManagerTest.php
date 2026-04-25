@@ -1,6 +1,10 @@
 <?php
 
+namespace PHPFileTool\FileTool\Tests;
+
 use PHPUnit\Framework\TestCase;
+use PHPFileTool\FileTool\FileManager;
+use PHPFileTool\FileTool\FileTool;
 use PHPFileTool\FileTool\DirectoryManager;
 
 class DirectoryManagerTest extends TestCase

@@ -1,10 +1,10 @@
 <?php
 
 namespace PHPFileTool\FileTool;
+
 use PHPFileTool\FileTool\Exceptions\InvalidOptionException;
 use PHPFileTool\FileTool\Exceptions\InvalidPathException;
 use PHPFileTool\FileTool\Exceptions\OperationFailedException;
-
 
 class PathHelper
 {

@@ -1,11 +1,11 @@
 <?php
 
 namespace PHPFileTool\FileTool;
+
 use PHPFileTool\FileTool\Exceptions\DirectoryAlreadyExistsException;
 use PHPFileTool\FileTool\Exceptions\DirectoryNotFoundException;
 use PHPFileTool\FileTool\Exceptions\OperationFailedException;
 use PHPFileTool\FileTool\Exceptions\PermissionDeniedException;
-
 
 class DirectoryManager
 {
@@ -70,7 +70,9 @@ class DirectoryManager
             }
 
             if (!is_writable($path)) {
-                throw new PermissionDeniedException('One or more files cannot be deleted because they are not writable.');
+                throw new PermissionDeniedException(
+                    'One or more files cannot be deleted because they are not writable.'
+                );
             }
 
             unlink($path);
