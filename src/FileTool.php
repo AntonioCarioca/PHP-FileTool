@@ -37,7 +37,7 @@ class FileTool
         return FileManager::createFile($dir, $file, $type);
     }
 
-    public static function createMultipleFiles(string $dir, string $file, ?string $type = null, int $quantity): array
+    public static function createMultipleFiles(string $dir, string $file, int $quantity, ?string $type = null): array
     {
         return FileManager::createMultipleFiles($dir, $file, $type, $quantity);
     }
@@ -92,7 +92,7 @@ class FileTool
         return self::createDirectory($dir, $permission);
     }
 
-    public static function createMany(string $dir, string $file, ?string $type = null, int $quantity): array
+    public static function createMany(string $dir, string $file, int $quantity, ?string $type = null): array
     {
         return self::createMultipleFiles($dir, $file, $type, $quantity);
     }

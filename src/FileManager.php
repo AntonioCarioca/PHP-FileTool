@@ -47,7 +47,12 @@ class FileManager
         return $fileFull;
     }
 
-    public static function createMultipleFiles(string $dir, string $file, ?string $type = null, int $quantity): array
+    public static function createMultipleFiles(
+        string $dir, 
+        string $file,
+        int $quantity,
+        ?string $type = null
+    ): array
     {
         $dir = PathHelper::normalizeDirectoryPath($dir);
         $file = PathHelper::sanitizeFileName($file, $type);
