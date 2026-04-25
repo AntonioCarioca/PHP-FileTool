@@ -16,7 +16,7 @@ class ExceptionTest extends TestCase
 {
     protected function tearDown(): void
     {
-        $file = TEST_DIR . '/already-exists.txt';
+        $file = TEST_DIR . '/alreadyexists.txt';
         $dir = TEST_DIR . '/already-exists-dir';
 
         if (file_exists($file)) {
@@ -44,13 +44,11 @@ class ExceptionTest extends TestCase
 
     public function testCreateFileThrowsExceptionWhenFileAlreadyExists(): void
     {
-        $file = TEST_DIR . '/already-exists.txt';
-
-        file_put_contents($file, 'test');
+        FileManager::createFile(TEST_DIR, 'already_exists.txt');
 
         $this->expectException(FileAlreadyExistsException::class);
 
-        FileManager::createFile(TEST_DIR, 'already-exists.txt');
+        FileManager::createFile(TEST_DIR, 'already_exists.txt');
     }
 
     public function testDeleteDirectoryThrowsExceptionWhenDirectoryDoesNotExist(): void
